@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="38c1cb08-64e0-419b-bdc1-7e53c3b5951f" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.metadata/.log" beforeDir="false" afterPath="$PROJECT_DIR$/.metadata/.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.core.resources/.history/eb/50a599520328001115a39fbe3ffb335b" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.core.resources/.projects/QuanLyDatBanNhaHang/.indexes/e4/1b/history.index" beforeDir="false" afterPath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.core.resources/.projects/QuanLyDatBanNhaHang/.indexes/e4/1b/history.index" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.core.resources/.projects/QuanLyDatBanNhaHang/.indexes/e4/72/history.index" beforeDir="false" afterPath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.core.resources/.projects/QuanLyDatBanNhaHang/.indexes/e4/72/history.index" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.core.resources/.projects/QuanLyDatBanNhaHang/.markers" beforeDir="false" afterPath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.core.resources/.projects/QuanLyDatBanNhaHang/.markers" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.core.resources/.projects/QuanLyDatBanNhaHang/org.eclipse.jdt.core/state.dat" beforeDir="false" afterPath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.core.resources/.projects/QuanLyDatBanNhaHang/org.eclipse.jdt.core/state.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.core.resources/.safetable/org.eclipse.core.resources" beforeDir="false" afterPath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.core.resources/.safetable/org.eclipse.core.resources" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.debug.ui/launchConfigurationHistory.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.debug.ui/launchConfigurationHistory.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.e4.workbench/workbench.xmi" beforeDir="false" afterPath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.e4.workbench/workbench.xmi" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.jdt.core/1865797976.index" beforeDir="false" afterPath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.jdt.core/1865797976.index" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.jdt.core/1954726492.index" beforeDir="false" afterPath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.jdt.core/1954726492.index" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.ltk.core.refactoring/.refactorings/QuanLyDatBanNhaHang/2026/3/13/refactorings.history" beforeDir="false" afterPath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.ltk.core.refactoring/.refactorings/QuanLyDatBanNhaHang/2026/3/13/refactorings.history" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.ltk.core.refactoring/.refactorings/QuanLyDatBanNhaHang/2026/3/13/refactorings.index" beforeDir="false" afterPath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.ltk.core.refactoring/.refactorings/QuanLyDatBanNhaHang/2026/3/13/refactorings.index" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.m2e.logback/0.log" beforeDir="false" afterPath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.m2e.logback/0.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.pde.core/.cache/clean-cache.properties" beforeDir="false" afterPath="$PROJECT_DIR$/.metadata/.plugins/org.eclipse.pde.core/.cache/clean-cache.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.metadata/version.ini" beforeDir="false" afterPath="$PROJECT_DIR$/.metadata/version.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/DAO/BanAnDAO.class" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/DAO/BanAnDAO.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/DAO/HoaDonDAO.class" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/DAO/HoaDonDAO.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/DAO/MonAnDAO.class" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/DAO/MonAnDAO.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/BackgroundImagePanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/BackgroundImagePanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmDangNhap$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmDangNhap$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmDangNhap.class" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmDangNhap.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmLeTan$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmLeTan$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmLeTan$2.class" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmLeTan$2.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmLeTan$3.class" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmLeTan$3.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmLeTan.class" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmLeTan.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmThuNgan$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmThuNgan$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmThuNgan$2.class" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmThuNgan$2.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmThuNgan$3.class" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmThuNgan$3.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmThuNgan.class" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/FrmThuNgan.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/PlaceholderPasswordField$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/PlaceholderPasswordField$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/PlaceholderPasswordField.class" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/PlaceholderPasswordField.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/PlaceholderTextField.class" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/PlaceholderTextField.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/RoundedButton.class" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/RoundedButton.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/RoundedPanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/bin/GUI/RoundedPanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/DAO/BanAnDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/DAO/BanAnDAO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/DAO/HoaDonDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/DAO/HoaDonDAO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/DAO/MonAnDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/DAO/MonAnDAO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/GUI/FrmChuyenBan.java" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/GUI/FrmChuyenBan.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/GUI/FrmDangNhap.java" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/GUI/FrmDangNhap.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/GUI/FrmGoiMon.java" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/GUI/FrmGoiMon.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/GUI/FrmGopBan.java" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/GUI/FrmGopBan.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/GUI/FrmLeTan.java" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/GUI/FrmLeTan.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/GUI/FrmTaoDatCho.java" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/GUI/FrmTaoDatCho.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/GUI/FrmThanhToan.java" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/GUI/FrmThanhToan.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/GUI/FrmThuNgan.java" beforeDir="false" afterPath="$PROJECT_DIR$/QuanLyDatBanNhaHang/src/GUI/FrmThuNgan.java" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 7
+}]]></component>
+  <component name="ProjectId" id="3BaJq9KyuxbmWsMt96Az1ELicJn" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/ADMIN/OneDrive/Desktop/PTUD_N8",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-a94e463ab2e7-intellij.indexing.shared.core-IU-243.25659.59" />
+        <option value="bundled-js-predefined-d6986cc7102b-1632447f56bf-JavaScript-IU-243.25659.59" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="38c1cb08-64e0-419b-bdc1-7e53c3b5951f" name="Changes" comment="" />
+      <created>1774721439700</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1774721439700</updated>
+      <workItem from="1774721441032" duration="43000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

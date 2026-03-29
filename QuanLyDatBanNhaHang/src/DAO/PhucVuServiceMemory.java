@@ -26,7 +26,7 @@ public class PhucVuServiceMemory implements PhucVuService {
         return new PhucVuServiceMemory();
     }
 
-    private PhucVuServiceMemory() {
+    public PhucVuServiceMemory() {
         themMonMau("MA01", "Phở bò tái", 65_000);
         themMonMau("MA02", "Gỏi cuốn tôm thịt", 45_000);
         themMonMau("MA03", "Cơm chiên Dương Châu", 75_000);
