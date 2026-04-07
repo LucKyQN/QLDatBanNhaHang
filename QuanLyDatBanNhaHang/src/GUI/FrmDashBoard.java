@@ -1,4 +1,3 @@
-
 package GUI;
 
 import Entity.NhanVien;
@@ -37,6 +36,9 @@ public class FrmDashBoard extends JFrame {
 	private FrmQLNhanVien pnlNhanVien;
 	private FrmQLMonAn pnlMonAn;
 	private FrmQLBanAn pnlBanAn;
+	private FrmQLKhuyenMai pnlKhuyenMai;
+	private FrmBaoCaoDoanhThu pnlBaoCao;
+
 	private final Map<String, JPanel> menuMap = new LinkedHashMap<>();
 	private String activeMenu = "Dashboard";
 
@@ -134,7 +136,6 @@ public class FrmDashBoard extends JFrame {
 		menuMap.put("Dashboard", btnDashboard);
 		menuMap.put("Quản lý Thực đơn", btnThucDon);
 		menuMap.put("Quản lý Bàn", btnBan);
-
 		menuMap.put("Quản lý Nhân sự", btnNhanSu);
 		menuMap.put("Quản lý Khuyến mãi", btnKhuyenMai);
 		menuMap.put("Báo cáo Doanh thu", btnBaoCao);
@@ -143,8 +144,10 @@ public class FrmDashBoard extends JFrame {
 		addMenuAction(btnDashboard, "Dashboard");
 		addMenuAction(btnThucDon, "Quản lý Thực đơn");
 		addMenuAction(btnBan, "Quản lý Bàn");
-
 		addMenuAction(btnNhanSu, "Quản lý Nhân sự");
+		addMenuAction(btnKhuyenMai, "Quản lý Khuyến mãi");
+		addMenuAction(btnBaoCao, "Báo cáo Doanh thu");
+		addMenuAction(btnCaiDat, "Cài đặt");
 
 		menuPanel.add(btnDashboard);
 		menuPanel.add(Box.createVerticalStrut(6));
@@ -261,6 +264,18 @@ public class FrmDashBoard extends JFrame {
 					showPage("NHANVIEN", "Quản lý Nhân sự", "Thêm, sửa, xóa và quản lý danh sách nhân viên",
 							"Quản lý Nhân sự");
 					break;
+				case "Quản lý Khuyến mãi":
+					showPage("KHUYENMAI", "Quản lý Khuyến mãi", "Tạo, cập nhật và quản lý các chương trình khuyến mãi",
+							"Quản lý Khuyến mãi");
+					break;
+				case "Báo cáo Doanh thu":
+					showPage("BAOCAO", "Báo cáo Doanh thu", "Theo dõi doanh thu và hiệu suất kinh doanh",
+							"Báo cáo Doanh thu");
+					break;
+				case "Cài đặt":
+					JOptionPane.showMessageDialog(FrmDashBoard.this, "Chức năng Cài đặt sẽ được phát triển sau.",
+							"Thông báo", JOptionPane.INFORMATION_MESSAGE);
+					break;
 				}
 			}
 		});
@@ -295,10 +310,16 @@ public class FrmDashBoard extends JFrame {
 		pnlNhanVien = new FrmQLNhanVien();
 		pnlMonAn = new FrmQLMonAn();
 		pnlBanAn = new FrmQLBanAn();
+		pnlKhuyenMai = new FrmQLKhuyenMai();
+		pnlBaoCao = new FrmBaoCaoDoanhThu();
+
 		contentPanel.add(dashboardPanel, "DASHBOARD");
 		contentPanel.add(pnlNhanVien, "NHANVIEN");
 		contentPanel.add(pnlMonAn, "MONAN");
 		contentPanel.add(pnlBanAn, "BANAN");
+		contentPanel.add(pnlKhuyenMai, "KHUYENMAI");
+		contentPanel.add(pnlBaoCao, "BAOCAO");
+
 		main.add(contentPanel, BorderLayout.CENTER);
 		return main;
 	}

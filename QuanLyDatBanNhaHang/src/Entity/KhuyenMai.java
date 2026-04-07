@@ -12,7 +12,7 @@ public class KhuyenMai {
 	private boolean trangThai;
 	private double giaTriKM;
 	private String loaiKM;
-	private String dieuKienYeuCau;
+	private String dieuKienApDung;
 	private int soLuongToiThieu;
 	private NhanVien quanLy;
 
@@ -20,7 +20,7 @@ public class KhuyenMai {
 	}
 
 	public KhuyenMai(String maKM, String tenKM, String moTaKM, Date ngayBatDau, Date ngayKetThuc, boolean trangThai,
-			double giaTriKM, String loaiKM, String dieuKienYeuCau, int soLuongToiThieu, NhanVien quanLy) {
+			double giaTriKM, String loaiKM, String dieuKienApDung, int soLuongToiThieu, NhanVien quanLy) {
 		this.maKM = maKM;
 		this.tenKM = tenKM;
 		this.moTaKM = moTaKM;
@@ -29,7 +29,7 @@ public class KhuyenMai {
 		this.trangThai = trangThai;
 		this.giaTriKM = giaTriKM;
 		this.loaiKM = loaiKM;
-		this.dieuKienYeuCau = dieuKienYeuCau;
+		this.dieuKienApDung = dieuKienApDung;
 		this.soLuongToiThieu = soLuongToiThieu;
 		this.quanLy = quanLy;
 	}
@@ -98,12 +98,12 @@ public class KhuyenMai {
 		this.loaiKM = loaiKM;
 	}
 
-	public String getDieuKienYeuCau() {
-		return dieuKienYeuCau;
+	public String getDieuKienApDung() {
+		return dieuKienApDung;
 	}
 
-	public void setDieuKienYeuCau(String dieuKienYeuCau) {
-		this.dieuKienYeuCau = dieuKienYeuCau;
+	public void setDieuKienApDung(String dieuKienApDung) {
+		this.dieuKienApDung = dieuKienApDung;
 	}
 
 	public int getSoLuongToiThieu() {
