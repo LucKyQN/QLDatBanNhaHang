@@ -1,4 +1,3 @@
-
 package GUI;
 
 import java.awt.*;
@@ -21,8 +20,14 @@ public class FrmTaoDatCho extends JDialog {
 	private static final Color BORDER_CLR = new Color(230, 230, 230);
 	private static final Color TEXT_GRAY = new Color(120, 120, 120);
 
+	private static final int PHI_DAT_BAN_CO_DINH = 250000;
+
 	private DefaultTableModel tbModelDaChon;
 	private JLabel lblTongTien;
+	private JLabel lblPhiDatBan;
+	private JLabel lblCocMon;
+	private JLabel lblTongTienCoc;
+
 	private int tongTien = 0;
 
 	private JComboBox<ComboItem> cbBan;
@@ -164,7 +169,7 @@ public class FrmTaoDatCho extends JDialog {
 		scrollFood.getVerticalScrollBar().setUnitIncrement(16);
 		pnlMenu.add(scrollFood, BorderLayout.CENTER);
 
-		JPanel pnlCart = new JPanel(new BorderLayout(0, 5));
+		JPanel pnlCart = new JPanel(new BorderLayout(0, 8));
 		pnlCart.setBackground(Color.WHITE);
 
 		JLabel lblCartTitle = new JLabel("Món đã chọn");
@@ -194,11 +199,22 @@ public class FrmTaoDatCho extends JDialog {
 		scrollCart.setBorder(BorderFactory.createLineBorder(BORDER_CLR));
 		pnlCart.add(scrollCart, BorderLayout.CENTER);
 
+		JPanel pnlBottomRight = new JPanel();
+		pnlBottomRight.setLayout(new BoxLayout(pnlBottomRight, BoxLayout.Y_AXIS));
+		pnlBottomRight.setBackground(Color.WHITE);
+
 		lblTongTien = new JLabel("Tổng cộng: 0 đ");
 		lblTongTien.setFont(new Font("Segoe UI", Font.BOLD, 16));
 		lblTongTien.setForeground(RED_MAIN);
 		lblTongTien.setHorizontalAlignment(SwingConstants.RIGHT);
-		pnlCart.add(lblTongTien, BorderLayout.SOUTH);
+		lblTongTien.setAlignmentX(Component.RIGHT_ALIGNMENT);
+
+		pnlBottomRight.add(Box.createVerticalStrut(8));
+		pnlBottomRight.add(lblTongTien);
+		pnlBottomRight.add(Box.createVerticalStrut(12));
+		pnlBottomRight.add(createDepositPanel());
+
+		pnlCart.add(pnlBottomRight, BorderLayout.SOUTH);
 
 		pnlRight.add(pnlMenu);
 		pnlRight.add(pnlCart);
@@ -206,6 +222,89 @@ public class FrmTaoDatCho extends JDialog {
 		body.add(pnlLeft);
 		body.add(pnlRight);
 		return body;
+	}
+
+	private JPanel createDepositPanel() {
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.setBackground(new Color(255, 252, 235));
+		panel.setBorder(BorderFactory.createCompoundBorder(
+				BorderFactory.createLineBorder(new Color(245, 203, 92), 1, true),
+				new EmptyBorder(14, 16, 14, 16)));
+
+		JPanel content = new JPanel();
+		content.setOpaque(false);
+		content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+
+		JLabel lblTitle = new JLabel("Tiền cọc phải thu");
+		lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
+		lblTitle.setForeground(new Color(146, 64, 14));
+		content.add(lblTitle);
+		content.add(Box.createVerticalStrut(14));
+
+		lblPhiDatBan = new JLabel("250.000 đ");
+		lblCocMon = new JLabel("0 đ");
+		lblTongTienCoc = new JLabel("250.000 đ");
+
+		content.add(createMoneyInfoRow("Phí đặt bàn:", lblPhiDatBan));
+		content.add(Box.createVerticalStrut(8));
+		content.add(createMoneyInfoRow("Cọc món đặt trước (30%):", lblCocMon));
+		content.add(Box.createVerticalStrut(10));
+
+		JSeparator sep = new JSeparator();
+		sep.setForeground(new Color(245, 203, 92));
+		content.add(sep);
+		content.add(Box.createVerticalStrut(10));
+
+		JPanel totalRow = new JPanel(new BorderLayout());
+		totalRow.setOpaque(false);
+
+		JLabel lblTotalText = new JLabel("Tổng tiền cọc:");
+		lblTotalText.setFont(new Font("Segoe UI", Font.BOLD, 15));
+		lblTotalText.setForeground(new Color(146, 64, 14));
+
+		lblTongTienCoc.setFont(new Font("Segoe UI", Font.BOLD, 16));
+		lblTongTienCoc.setForeground(RED_MAIN);
+
+		totalRow.add(lblTotalText, BorderLayout.WEST);
+		totalRow.add(lblTongTienCoc, BorderLayout.EAST);
+
+		content.add(totalRow);
+		content.add(Box.createVerticalStrut(10));
+
+		JLabel lblNote = new JLabel("* Phí đặt bàn: 250.000đ | Đặt món trước: thu 30% tổng tiền món");
+		lblNote.setFont(new Font("Segoe UI", Font.ITALIC, 12));
+		lblNote.setForeground(TEXT_GRAY);
+		content.add(lblNote);
+
+		panel.add(content, BorderLayout.CENTER);
+		return panel;
+	}
+
+	private JPanel createMoneyInfoRow(String label, JLabel valueLabel) {
+		JPanel row = new JPanel(new BorderLayout());
+		row.setOpaque(false);
+
+		JLabel lbl = new JLabel(label);
+		lbl.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		lbl.setForeground(new Color(80, 80, 80));
+
+		valueLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		valueLabel.setForeground(new Color(80, 80, 80));
+		valueLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+
+		row.add(lbl, BorderLayout.WEST);
+		row.add(valueLabel, BorderLayout.EAST);
+		return row;
+	}
+
+	private void capNhatTienCoc() {
+		int tienCocMon = (int) Math.round(tongTien * 0.3);
+		int tongTienCoc = PHI_DAT_BAN_CO_DINH + tienCocMon;
+
+		lblTongTien.setText("Tổng cộng: " + formatMoney(tongTien));
+		lblPhiDatBan.setText(formatMoney(PHI_DAT_BAN_CO_DINH));
+		lblCocMon.setText(formatMoney(tienCocMon));
+		lblTongTienCoc.setText(formatMoney(tongTienCoc));
 	}
 
 	private String getIconByName(String ten) {
@@ -220,7 +319,7 @@ public class FrmTaoDatCho extends JDialog {
 			return "🍗";
 		if (ten.contains("lẩu") || ten.contains("canh"))
 			return "🍲";
-		if (ten.contains("bia") || ten.contains("nước") || ten.contains("trà"))
+		if (ten.contains("bia") || ten.contains("nước") || ten.contains("trà") || ten.contains("cà phê"))
 			return "🥤";
 		if (ten.contains("salad") || ten.contains("rau"))
 			return "🥗";
@@ -289,6 +388,9 @@ public class FrmTaoDatCho extends JDialog {
 				return;
 			}
 
+			int tienCocMon = (int) Math.round(tongTien * 0.3);
+			int tongTienCoc = PHI_DAT_BAN_CO_DINH + tienCocMon;
+
 			String maBan = selectedBan.getKey();
 			String tenHienThi = selectedBan.getValue();
 
@@ -299,7 +401,7 @@ public class FrmTaoDatCho extends JDialog {
 			phieu.setSoDienThoai(sdt);
 			phieu.setSoLuongKhach(soLuongKhach);
 			phieu.setThoiGianDen(thoiGianDen);
-			phieu.setGhiChu(ghiChu);
+			phieu.setGhiChu(ghiChu + " | Tiền cọc: " + formatMoney(tongTienCoc));
 			phieu.setMaBan(maBan);
 
 			PhieuDatBanDAO phieuDAO = new PhieuDatBanDAO();
@@ -313,15 +415,7 @@ public class FrmTaoDatCho extends JDialog {
 			boolean donOk = true;
 			boolean ctOk = true;
 
-			System.out.println("=== DEBUG TAO DAT CHO ===");
-			System.out.println("maBan = " + maBan);
-			System.out.println("maPhieu = " + maPhieu);
-			System.out.println("maDon = " + maDon);
-			System.out.println("tbModelDaChon rows = " + tbModelDaChon.getRowCount());
-			System.out.println("phieuOk = " + phieuOk);
-
 			if (phieuOk && tbModelDaChon.getRowCount() > 0) {
-				System.out.println(">>> CHUAN BI TAO DonDatMon");
 				donOk = donDAO.taoDonDatMon(maDon, maNV, maBan, ghiChu);
 
 				if (donOk) {
@@ -329,9 +423,6 @@ public class FrmTaoDatCho extends JDialog {
 						String maMonAn = tbModelDaChon.getValueAt(i, 0).toString();
 						int soLuongMon = Integer.parseInt(tbModelDaChon.getValueAt(i, 2).toString());
 						long donGia = Long.parseLong(tbModelDaChon.getValueAt(i, 3).toString());
-
-						System.out.println(
-								">>> Luu CTDDM: maMonAn=" + maMonAn + ", soLuong=" + soLuongMon + ", donGia=" + donGia);
 
 						if (!donDAO.themChiTietDonDatMon(maDon, maMonAn, soLuongMon, donGia, "")) {
 							ctOk = false;
@@ -341,13 +432,11 @@ public class FrmTaoDatCho extends JDialog {
 				}
 			}
 
-			System.out.println("donOk = " + donOk);
-			System.out.println("ctOk = " + ctOk);
-
 			if (phieuOk && donOk && ctOk) {
 				if (banDAO.capNhatTrangThai(maBan, "Đã đặt")) {
 					JOptionPane.showMessageDialog(this,
-							"✅ Đặt chỗ thành công cho " + tenKhach + " tại " + tenHienThi + "!");
+							"✅ Đặt chỗ thành công cho " + tenKhach + " tại " + tenHienThi
+									+ "!\nTổng tiền cọc cần thu: " + formatMoney(tongTienCoc));
 
 					JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
 					if (parentFrame instanceof FrmLeTan) {
@@ -361,8 +450,7 @@ public class FrmTaoDatCho extends JDialog {
 				}
 			} else {
 				JOptionPane.showMessageDialog(this,
-						"❌ Lỗi: Không thể lưu thông tin đặt chỗ / món đặt trước vào cơ sở dữ liệu!\n" + "phieuOk = "
-								+ phieuOk + "\n" + "donOk = " + donOk + "\n" + "ctOk = " + ctOk,
+						"❌ Lỗi: Không thể lưu thông tin đặt chỗ / món đặt trước vào cơ sở dữ liệu!",
 						"Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
 			}
 		});
@@ -446,7 +534,7 @@ public class FrmTaoDatCho extends JDialog {
 			}
 
 			tongTien += price;
-			lblTongTien.setText("Tổng cộng: " + formatMoney(tongTien));
+			capNhatTienCoc();
 		});
 
 		item.add(lblImg, BorderLayout.WEST);
