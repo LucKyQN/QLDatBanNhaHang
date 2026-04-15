@@ -8,5 +8,8 @@ public class BanAnModel {
 	public long tamTinh;
 	public String tenKH, sdt;
 	public String gioVao;
-	public String trangThai; 
+	public String trangThai;
+
+	public long tienCoc;
+	public long tienMonDatTruoc;
 }

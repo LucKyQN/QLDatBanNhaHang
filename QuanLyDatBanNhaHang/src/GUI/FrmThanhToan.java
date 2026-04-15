@@ -231,7 +231,7 @@ public class FrmThanhToan extends JDialog {
 		// Gọi hàm thanh toán từ DAO (Hàm này tự cập nhật Hóa Đơn và cập nhật luôn Bàn
 		// về Trống)
 		// Hiện tại giả định chietKhau = 0 và maKM = "NONE"
-		boolean ok = hoaDonDAO.thanhToan(maHDHienTai, 0, "NONE");
+		boolean ok = hoaDonDAO.thanhToan(maHDHienTai, tongTienBill, 0, "NONE");
 
 		if (ok) {
 			JOptionPane.showMessageDialog(this, "✅ Thanh toán thành công cho hóa đơn: " + maHDHienTai);

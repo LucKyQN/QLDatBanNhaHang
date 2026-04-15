@@ -46,8 +46,14 @@ public class FrmThuNgan extends JFrame {
 	private JPanel pnlHoaDon;
 	private JLabel lbTienThua;
 	private JTextField txtKhachDua;
-
+	private JLabel lbTienCoc;
+	private JLabel lbConPhaiThanhToan;
 	private long tongCuoiCung = 0;
+	private long tienGiamHienTai = 0;
+	private long phiDichVuHienTai = 0;
+	private long vatHienTai = 0;
+	private long soTienCanThu = 0;
+
 	private JComboBox<String> cboKM_Current;
 	private List<String[]> dsKM_Current = new ArrayList<>();
 	private JLabel lbTamTinh, lbGiamGia, lbPhiDV, lbVAT, lbTongTien;
@@ -60,7 +66,7 @@ public class FrmThuNgan extends JFrame {
 		initUI();
 		taiDanhSachBan();
 		Timer timer = new Timer(5000, e -> {
-			System.out.println("Đang tự động cập nhật danh sách bàn...");
+			System.out.println("Đang tự động cập nhật danh sách bàn");
 			taiDanhSachBan();
 		});
 		timer.start();
@@ -251,14 +257,7 @@ public class FrmThuNgan extends JFrame {
 		container.add(buildFooterActions(ban), BorderLayout.SOUTH);
 
 		pnlHoaDon.add(container, BorderLayout.CENTER);
-//		JPanel container = new JPanel(new BorderLayout(0, 25));
-//		container.setOpaque(false);
-//		container.setBorder(new EmptyBorder(30, 50, 30, 50));
-//
-//		container.add(buildBillPaper(ban, dsMon), BorderLayout.CENTER);
-//		container.add(buildFooterActions(ban), BorderLayout.SOUTH);
-//
-//		pnlHoaDon.add(container, BorderLayout.CENTER);
+
 		pnlHoaDon.revalidate();
 		pnlHoaDon.repaint();
 
@@ -308,6 +307,13 @@ public class FrmThuNgan extends JFrame {
 		lbPhiDV = new JLabel("0 đ");
 		lbVAT = new JLabel("0 đ");
 		lbTongTien = new JLabel("0 đ");
+		lbTienCoc = new JLabel("0 đ");
+		lbTienCoc.setFont(new Font("Segoe UI", Font.BOLD, 16));
+		lbTienCoc.setForeground(new Color(0, 128, 0));
+
+		lbConPhaiThanhToan = new JLabel("0 đ");
+		lbConPhaiThanhToan.setFont(new Font("Segoe UI", Font.BOLD, 24));
+		lbConPhaiThanhToan.setForeground(RED_MAIN);
 		lbTongTien.setFont(new Font("Segoe UI", Font.BOLD, 24));
 		lbTongTien.setForeground(RED_MAIN);
 
@@ -329,35 +335,58 @@ public class FrmThuNgan extends JFrame {
 
 		paper.add(createSummaryRow("Tạm tính tổng món:", lbTamTinh));
 		paper.add(createSummaryRow("Khuyến mãi:", cboKM_Current, lbGiamGia));
+		paper.add(createSummaryRow("Phí dịch vụ (5%):", lbPhiDV));
 		paper.add(createSummaryRow("VAT (10%):", lbVAT));
-		paper.add(Box.createVerticalStrut(15));
-		paper.add(createSummaryRow("TỔNG CỘNG:", lbTongTien));
+		paper.add(createSummaryRow("Tổng cộng:", lbTongTien));
+		paper.add(createSummaryRow("Đã cọc:", lbTienCoc));
+		paper.add(Box.createVerticalStrut(10));
+		paper.add(createSummaryRow("Còn phải thanh toán:", lbConPhaiThanhToan));
 		paper.add(Box.createVerticalStrut(10));
 		paper.add(createSummaryRow("Khách đưa:", txtKhachDua));
 		paper.add(createSummaryRow("Tiền thừa trả khách:", lbTienThua));
-
 		return paper;
 	}
 
 	private void tinhToanLai() {
-		if (dsKM_Current == null || dsKM_Current.isEmpty() || cboKM_Current == null)
+		if (dsKM_Current == null || dsKM_Current.isEmpty() || cboKM_Current == null) {
 			return;
+		}
 
 		int idx = cboKM_Current.getSelectedIndex();
 		double giaTriKM = Double.parseDouble(dsKM_Current.get(idx)[2]);
 		String loaiKM = dsKM_Current.get(idx)[3];
 
-		long tienGiam = loaiKM.equals("Phần trăm") ? (long) (giaTriTamTinh * giaTriKM / 100) : (long) giaTriKM;
+		long tienGiam;
+		if ("Phần trăm".equalsIgnoreCase(loaiKM)) {
+			tienGiam = (long) (giaTriTamTinh * giaTriKM / 100.0);
+		} else {
+			tienGiam = (long) giaTriKM;
+		}
+
+		if (tienGiam < 0)
+			tienGiam = 0;
+		if (tienGiam > giaTriTamTinh)
+			tienGiam = giaTriTamTinh;
+
 		long sauGiam = giaTriTamTinh - tienGiam;
 		long phiDV = (long) (sauGiam * 0.05);
-		long vat = (long) (sauGiam * 0.1);
+		long vat = (long) (sauGiam * 0.10);
+
+		tienGiamHienTai = tienGiam;
+		phiDichVuHienTai = phiDV;
+		vatHienTai = vat;
 
 		tongCuoiCung = Math.max(0, sauGiam + phiDV + vat);
 
-		lbGiamGia.setText("-" + formatTien(tienGiam) + " đ");
-		lbPhiDV.setText(formatTien(phiDV) + " đ");
-		lbVAT.setText(formatTien(vat) + " đ");
+		long tienCoc = (banDangChon != null) ? banDangChon.tienCoc : 0;
+		soTienCanThu = Math.max(0, tongCuoiCung - tienCoc);
+
+		lbGiamGia.setText("-" + formatTien(tienGiamHienTai) + " đ");
+		lbPhiDV.setText(formatTien(phiDichVuHienTai) + " đ");
+		lbVAT.setText(formatTien(vatHienTai) + " đ");
 		lbTongTien.setText(formatTien(tongCuoiCung) + " đ");
+		lbTienCoc.setText("-" + formatTien(tienCoc) + " đ");
+		lbConPhaiThanhToan.setText(formatTien(soTienCanThu) + " đ");
 
 		tinhTienThua();
 	}
@@ -372,7 +401,8 @@ public class FrmThuNgan extends JFrame {
 			}
 
 			long khachDua = Long.parseLong(s);
-			long thua = khachDua - tongCuoiCung;
+			//long thua = khachDua - tongCuoiCung;
+			long thua = khachDua - soTienCanThu;
 
 			if (thua < 0) {
 				lbTienThua.setText("Chưa đủ tiền");
@@ -435,7 +465,7 @@ public class FrmThuNgan extends JFrame {
 			return;
 		}
 
-		if (khachDua < tongCuoiCung) {
+		if (khachDua < soTienCanThu) {
 			JOptionPane.showMessageDialog(this, "Khách đưa chưa đủ tiền để thanh toán.\n" + "Khách đưa: "
 					+ formatTien(khachDua) + " đ\n" + "Tổng cộng: " + formatTien(tongCuoiCung) + " đ");
 			txtKhachDua.requestFocus();
@@ -457,8 +487,8 @@ public class FrmThuNgan extends JFrame {
 
 		String maKM = dsKM_Current.get(cboKM_Current.getSelectedIndex())[0];
 
-		if (dao.thanhToan(ban.maHD, 0.0, maKM)) {
-			JOptionPane.showMessageDialog(this, "✅ Đã lưu hóa đơn & giải phóng bàn!");
+		if (dao.thanhToan(ban.maHD, soTienCanThu, tienGiamHienTai, maKM)) {
+			JOptionPane.showMessageDialog(this, "Đã lưu hóa đơn & giải phóng bàn!");
 
 			int export = JOptionPane.showConfirmDialog(this, "Bạn có muốn xuất hóa đơn PDF ngay bây giờ không?",
 					"Xuất hóa đơn PDF", JOptionPane.YES_NO_OPTION);
@@ -471,7 +501,7 @@ public class FrmThuNgan extends JFrame {
 			taiDanhSachBan();
 			hienThiChoChon();
 		} else {
-			JOptionPane.showMessageDialog(this, "❌ Lỗi: Không thể kết nối cơ sở dữ liệu!");
+			JOptionPane.showMessageDialog(this, "Lỗi: Không thể kết nối cơ sở dữ liệu!");
 		}
 	}
 
@@ -599,10 +629,10 @@ public class FrmThuNgan extends JFrame {
 			thanks.setAlignment(Element.ALIGN_CENTER);
 			document.add(thanks);
 
-			JOptionPane.showMessageDialog(this, "✅ Xuất PDF thành công:\n" + file.getAbsolutePath());
+			JOptionPane.showMessageDialog(this, "Xuất PDF thành công:\n" + file.getAbsolutePath());
 		} catch (Exception e) {
 			e.printStackTrace();
-			JOptionPane.showMessageDialog(this, "❌ Xuất PDF thất bại: " + e.getMessage());
+			JOptionPane.showMessageDialog(this, "Xuất PDF thất bại: " + e.getMessage());
 		} finally {
 			if (document.isOpen()) {
 				document.close();
