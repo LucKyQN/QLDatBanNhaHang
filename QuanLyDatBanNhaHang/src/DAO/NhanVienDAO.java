@@ -1,4 +1,3 @@
-
 package DAO;
 
 import Entity.NhanVien;
@@ -76,6 +75,8 @@ public class NhanVienDAO {
 			Connection con = getConnection();
 			PreparedStatement stmt = con.prepareStatement(sql);
 
+			String[] khuVuc = tachKhuVucTheoVaiTro(nv);
+
 			stmt.setString(1, nv.getMaNV());
 			stmt.setString(2, nv.getHoTenNV());
 			stmt.setDate(3, nv.getNgaySinh() != null ? new Date(nv.getNgaySinh().getTime()) : null);
@@ -83,10 +84,12 @@ public class NhanVienDAO {
 			stmt.setString(5, nv.getSoDienThoai());
 			stmt.setString(6, nv.getDiaChi());
 			stmt.setDouble(7, nv.getHeSoLuong());
-			stmt.setString(8, nv.getCaLam());
-			stmt.setString(9, nv.getKhuVucQuanLy());
-			stmt.setString(10, nv.getKhuVucPhucVu());
-			stmt.setString(11, nv.getKhuVucTiepTan());
+
+			stmt.setString(8, ""); // bỏ Ca làm trên form, vẫn giữ tương thích DB
+			stmt.setString(9, khuVuc[0]); // khvuQuanLy
+			stmt.setString(10, khuVuc[1]); // khvuPhucVu
+			stmt.setString(11, khuVuc[2]); // khvuTiepTan
+
 			stmt.setString(12, nv.getTenDangNhap());
 			stmt.setString(13, nv.getMatKhau());
 			stmt.setString(14, nv.getVaiTro());
@@ -112,16 +115,20 @@ public class NhanVienDAO {
 			Connection con = getConnection();
 			PreparedStatement stmt = con.prepareStatement(sql);
 
+			String[] khuVuc = tachKhuVucTheoVaiTro(nv);
+
 			stmt.setString(1, nv.getHoTenNV());
 			stmt.setDate(2, nv.getNgaySinh() != null ? new Date(nv.getNgaySinh().getTime()) : null);
 			stmt.setString(3, nv.getGioiTinh());
 			stmt.setString(4, nv.getSoDienThoai());
 			stmt.setString(5, nv.getDiaChi());
 			stmt.setDouble(6, nv.getHeSoLuong());
-			stmt.setString(7, nv.getCaLam());
-			stmt.setString(8, nv.getKhuVucQuanLy());
-			stmt.setString(9, nv.getKhuVucPhucVu());
-			stmt.setString(10, nv.getKhuVucTiepTan());
+
+			stmt.setString(7, ""); // bỏ Ca làm
+			stmt.setString(8, khuVuc[0]);
+			stmt.setString(9, khuVuc[1]);
+			stmt.setString(10, khuVuc[2]);
+
 			stmt.setString(11, nv.getTenDangNhap());
 			stmt.setString(12, nv.getMatKhau());
 			stmt.setString(13, nv.getVaiTro());
@@ -226,7 +233,6 @@ public class NhanVienDAO {
 		}
 	}
 
-	// HÀM MỚI: XÓA HOÀN TOÀN NHÂN VIÊN KHỎI DATABASE
 	public boolean xoaHoanToanNhanVien(String maNV) {
 		String sql = "DELETE FROM NhanVien WHERE maNV = ?";
 
@@ -244,6 +250,24 @@ public class NhanVienDAO {
 			e.printStackTrace();
 			return false;
 		}
+	}
+
+	private String[] tachKhuVucTheoVaiTro(NhanVien nv) {
+		String khuVucQuanLy = "";
+		String khuVucPhucVu = "";
+		String khuVucTiepTan = "";
+
+		String vaiTro = nv.getVaiTro() != null ? nv.getVaiTro().trim() : "";
+
+		if ("Quản lý".equalsIgnoreCase(vaiTro)) {
+			khuVucQuanLy = nv.getKhuVucQuanLy() != null ? nv.getKhuVucQuanLy().trim() : "";
+		} else if ("Phục vụ".equalsIgnoreCase(vaiTro)) {
+			khuVucPhucVu = nv.getKhuVucPhucVu() != null ? nv.getKhuVucPhucVu().trim() : "";
+		} else if ("Lễ tân".equalsIgnoreCase(vaiTro)) {
+			khuVucTiepTan = nv.getKhuVucTiepTan() != null ? nv.getKhuVucTiepTan().trim() : "";
+		}
+
+		return new String[] { khuVucQuanLy, khuVucPhucVu, khuVucTiepTan };
 	}
 
 	private NhanVien mapNhanVien(ResultSet rs) throws Exception {

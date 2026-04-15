@@ -1,4 +1,3 @@
-
 package GUI;
 
 import DAO.NhanVienDAO;
@@ -54,12 +53,12 @@ public class FrmQLNhanVien extends JPanel {
 		JButton btnThem = new JButton("Thêm");
 		JButton btnSua = new JButton("Sửa");
 		JButton btnXoaMem = new JButton("Xóa mềm");
-		JButton btnXoaHoanToan = new JButton("Xóa hoàn toàn"); // Thay nút Làm mới
+		JButton btnXoaHoanToan = new JButton("Xóa hoàn toàn");
 
 		btnThem.addActionListener(e -> moDialogThem());
 		btnSua.addActionListener(e -> moDialogSua());
 		btnXoaMem.addActionListener(e -> xoaMemNhanVien());
-		btnXoaHoanToan.addActionListener(e -> xoaHoanToanNhanVien()); // Sự kiện nút Xóa hoàn toàn
+		btnXoaHoanToan.addActionListener(e -> xoaHoanToanNhanVien());
 
 		btnPanel.add(btnXoaHoanToan);
 		btnPanel.add(btnXoaMem);
@@ -79,7 +78,7 @@ public class FrmQLNhanVien extends JPanel {
 				BorderFactory.createLineBorder(new Color(230, 230, 230), 1, true), new EmptyBorder(16, 16, 16, 16)));
 
 		model = new DefaultTableModel(
-				new String[] { "Mã NV", "Họ tên", "Ngày sinh", "Giới tính", "SĐT", "Vai trò", "Ca làm", "Trạng thái" },
+				new String[] { "Mã NV", "Họ tên", "Ngày sinh", "Giới tính", "SĐT", "Vai trò", "Khu vực", "Trạng thái" },
 				0) {
 			@Override
 			public boolean isCellEditable(int row, int column) {
@@ -94,7 +93,6 @@ public class FrmQLNhanVien extends JPanel {
 		tblNhanVien.setFont(new Font("Segoe UI", Font.PLAIN, 13));
 
 		JScrollPane scrollPane = new JScrollPane(tblNhanVien);
-
 		panel.add(scrollPane, BorderLayout.CENTER);
 		return panel;
 	}
@@ -107,8 +105,21 @@ public class FrmQLNhanVien extends JPanel {
 		for (NhanVien nv : dsNhanVien) {
 			model.addRow(new Object[] { nv.getMaNV(), nv.getHoTenNV(),
 					nv.getNgaySinh() != null ? sdf.format(nv.getNgaySinh()) : "", nv.getGioiTinh(), nv.getSoDienThoai(),
-					nv.getVaiTro(), nv.getCaLam(), nv.isTrangThai() ? "Đang hoạt động" : "Ngưng hoạt động" });
+					nv.getVaiTro(), layKhuVucHienThi(nv), nv.isTrangThai() ? "Đang hoạt động" : "Ngưng hoạt động" });
 		}
+	}
+
+	private String layKhuVucHienThi(NhanVien nv) {
+		if (nv.getKhuVucQuanLy() != null && !nv.getKhuVucQuanLy().trim().isEmpty()) {
+			return nv.getKhuVucQuanLy();
+		}
+		if (nv.getKhuVucPhucVu() != null && !nv.getKhuVucPhucVu().trim().isEmpty()) {
+			return nv.getKhuVucPhucVu();
+		}
+		if (nv.getKhuVucTiepTan() != null && !nv.getKhuVucTiepTan().trim().isEmpty()) {
+			return nv.getKhuVucTiepTan();
+		}
+		return "";
 	}
 
 	private NhanVien getNhanVienDangChon() {
@@ -170,7 +181,6 @@ public class FrmQLNhanVien extends JPanel {
 		}
 	}
 
-	// HÀM MỚI: XÓA HOÀN TOÀN NHÂN VIÊN
 	private void xoaHoanToanNhanVien() {
 		NhanVien nv = getNhanVienDangChon();
 		if (nv == null) {
@@ -196,7 +206,6 @@ public class FrmQLNhanVien extends JPanel {
 		}
 	}
 
-	// ======================= DIALOG CRUD =======================
 	static class NhanVienDialog extends JDialog {
 
 		private final NhanVienDAO dao;
@@ -210,10 +219,7 @@ public class FrmQLNhanVien extends JPanel {
 		private JTextField txtSoDienThoai;
 		private JTextField txtDiaChi;
 		private JTextField txtHeSoLuong;
-		private JComboBox<String> cboCaLam;
-		private JComboBox<String> cboKhuVucQuanLy;
-		private JComboBox<String> cboKhuVucPhucVu;
-		private JComboBox<String> cboKhuVucTiepTan;
+		private JComboBox<String> cboKhuVuc;
 		private JTextField txtUsername;
 		private JPasswordField txtPassword;
 		private JComboBox<String> cboVaiTro;
@@ -232,7 +238,7 @@ public class FrmQLNhanVien extends JPanel {
 			}
 
 			pack();
-			setSize(980, 520);
+			setSize(980, 480);
 			setLocationRelativeTo(owner);
 		}
 
@@ -245,33 +251,30 @@ public class FrmQLNhanVien extends JPanel {
 			root.setBorder(new EmptyBorder(20, 20, 20, 20));
 			root.setBackground(Color.WHITE);
 
-			JPanel fields = new JPanel(new GridLayout(5, 3, 12, 12));
+			JPanel fields = new JPanel(new GridLayout(4, 3, 12, 12));
 			fields.setOpaque(false);
 
 			txtMaNV = new JTextField();
 			txtHoTen = new JTextField();
 			txtNgaySinh = new JTextField();
 
-			cboGioiTinh = new JComboBox<>(new String[] { "Nam", "Nữ" });
+			cboGioiTinh = new JComboBox<>(new String[] { "Nam", "Nữ", "Khác" });
 
 			txtSoDienThoai = new JTextField();
 			txtDiaChi = new JTextField();
 			txtHeSoLuong = new JTextField();
 
-			cboCaLam = new JComboBox<>(new String[] { "Ca sáng", "Ca chiều", "Ca tối" });
+			cboVaiTro = new JComboBox<>(new String[] { "Quản lý", "Thu ngân", "Nhân viên", "Lễ tân", "Phục vụ" });
+			cboVaiTro.addActionListener(e -> capNhatTrangThaiKhuVuc());
 
-			cboKhuVucQuanLy = new JComboBox<>(new String[] { "", "Khu A", "Khu B", "Khu C", "Sảnh chính", "VIP" });
-			cboKhuVucPhucVu = new JComboBox<>(new String[] { "", "Khu A", "Khu B", "Khu C", "Sảnh chính", "VIP" });
-			cboKhuVucTiepTan = new JComboBox<>(new String[] { "", "Quầy 1", "Quầy 2", "Sảnh chính", "Lối vào VIP" });
-
-			cboKhuVucQuanLy.setEditable(true);
-			cboKhuVucPhucVu.setEditable(true);
-			cboKhuVucTiepTan.setEditable(true);
+			cboKhuVuc = new JComboBox<>(new String[] { "", "Tầng 1", "Tầng 2", "Phòng VIP", "Sảnh chính", "Quầy lễ tân",
+					"Khu A", "Khu B", "Khu C" });
+			cboKhuVuc.setEditable(true);
+			cboKhuVuc.setEnabled(false);
 
 			txtUsername = new JTextField();
 			txtPassword = new JPasswordField();
 
-			cboVaiTro = new JComboBox<>(new String[] { "Quản lý", "Thu ngân", "Nhân viên", "Lễ tân", "Phục vụ" });
 			chkTrangThai = new JCheckBox("Đang hoạt động");
 			chkTrangThai.setSelected(true);
 			chkTrangThai.setOpaque(false);
@@ -285,12 +288,8 @@ public class FrmQLNhanVien extends JPanel {
 			fields.add(createField("Địa chỉ", txtDiaChi));
 
 			fields.add(createField("Hệ số lương", txtHeSoLuong));
-			fields.add(createField("Ca làm", cboCaLam));
 			fields.add(createField("Vai trò", cboVaiTro));
-
-			fields.add(createField("KV Quản lý", cboKhuVucQuanLy));
-			fields.add(createField("KV Phục vụ", cboKhuVucPhucVu));
-			fields.add(createField("KV Tiếp tân", cboKhuVucTiepTan));
+			fields.add(createField("Khu vực", cboKhuVuc));
 
 			fields.add(createField("Tên đăng nhập", txtUsername));
 			fields.add(createField("Mật khẩu", txtPassword));
@@ -312,6 +311,8 @@ public class FrmQLNhanVien extends JPanel {
 			root.add(btnPanel, BorderLayout.SOUTH);
 
 			setContentPane(root);
+
+			capNhatTrangThaiKhuVuc();
 		}
 
 		private JPanel createField(String label, JComponent comp) {
@@ -327,6 +328,19 @@ public class FrmQLNhanVien extends JPanel {
 			return p;
 		}
 
+		private void capNhatTrangThaiKhuVuc() {
+			String vaiTro = cboVaiTro.getSelectedItem() != null ? cboVaiTro.getSelectedItem().toString() : "";
+
+			boolean canDungKhuVuc = "Quản lý".equalsIgnoreCase(vaiTro) || "Phục vụ".equalsIgnoreCase(vaiTro)
+					|| "Lễ tân".equalsIgnoreCase(vaiTro);
+
+			cboKhuVuc.setEnabled(canDungKhuVuc);
+
+			if (!canDungKhuVuc) {
+				cboKhuVuc.setSelectedItem("");
+			}
+		}
+
 		private void doDuLieuLenForm() {
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -339,14 +353,22 @@ public class FrmQLNhanVien extends JPanel {
 			txtSoDienThoai.setText(nhanVienSua.getSoDienThoai());
 			txtDiaChi.setText(nhanVienSua.getDiaChi());
 			txtHeSoLuong.setText(String.valueOf(nhanVienSua.getHeSoLuong()));
-			cboCaLam.setSelectedItem(nhanVienSua.getCaLam());
-			cboKhuVucQuanLy.setSelectedItem(nhanVienSua.getKhuVucQuanLy());
-			cboKhuVucPhucVu.setSelectedItem(nhanVienSua.getKhuVucPhucVu());
-			cboKhuVucTiepTan.setSelectedItem(nhanVienSua.getKhuVucTiepTan());
 			txtUsername.setText(nhanVienSua.getTenDangNhap());
 			txtPassword.setText(nhanVienSua.getMatKhau());
 			cboVaiTro.setSelectedItem(nhanVienSua.getVaiTro());
 			chkTrangThai.setSelected(nhanVienSua.isTrangThai());
+
+			String khuVuc = "";
+			if (nhanVienSua.getKhuVucQuanLy() != null && !nhanVienSua.getKhuVucQuanLy().trim().isEmpty()) {
+				khuVuc = nhanVienSua.getKhuVucQuanLy();
+			} else if (nhanVienSua.getKhuVucPhucVu() != null && !nhanVienSua.getKhuVucPhucVu().trim().isEmpty()) {
+				khuVuc = nhanVienSua.getKhuVucPhucVu();
+			} else if (nhanVienSua.getKhuVucTiepTan() != null && !nhanVienSua.getKhuVucTiepTan().trim().isEmpty()) {
+				khuVuc = nhanVienSua.getKhuVucTiepTan();
+			}
+
+			cboKhuVuc.setSelectedItem(khuVuc);
+			capNhatTrangThaiKhuVuc();
 		}
 
 		private void luuNhanVien() {
@@ -426,6 +448,9 @@ public class FrmQLNhanVien extends JPanel {
 				throw new Exception("Ngày sinh không đúng định dạng (yyyy-MM-dd).");
 			}
 
+			String vaiTro = cboVaiTro.getSelectedItem().toString();
+			String khuVuc = layGiaTriCombo(cboKhuVuc);
+
 			NhanVien nv = new NhanVien();
 			nv.setMaNV(maNV);
 			nv.setHoTenNV(hoTen);
@@ -434,20 +459,31 @@ public class FrmQLNhanVien extends JPanel {
 			nv.setSoDienThoai(sdt);
 			nv.setDiaChi(diaChi);
 			nv.setHeSoLuong(heSoLuong);
-			nv.setCaLam(cboCaLam.getSelectedItem().toString());
-			nv.setKhuVucQuanLy(layGiaTriCombo(cboKhuVucQuanLy));
-			nv.setKhuVucPhucVu(layGiaTriCombo(cboKhuVucPhucVu));
-			nv.setKhuVucTiepTan(layGiaTriCombo(cboKhuVucTiepTan));
+
+			nv.setCaLam("");
+
+			nv.setKhuVucQuanLy("");
+			nv.setKhuVucPhucVu("");
+			nv.setKhuVucTiepTan("");
+
+			if ("Quản lý".equalsIgnoreCase(vaiTro)) {
+				nv.setKhuVucQuanLy(khuVuc);
+			} else if ("Phục vụ".equalsIgnoreCase(vaiTro)) {
+				nv.setKhuVucPhucVu(khuVuc);
+			} else if ("Lễ tân".equalsIgnoreCase(vaiTro)) {
+				nv.setKhuVucTiepTan(khuVuc);
+			}
+
 			nv.setTenDangNhap(username);
 			nv.setMatKhau(password);
-			nv.setVaiTro(cboVaiTro.getSelectedItem().toString());
+			nv.setVaiTro(vaiTro);
 			nv.setTrangThai(chkTrangThai.isSelected());
 
 			return nv;
 		}
 
 		private String layGiaTriCombo(JComboBox<String> cbo) {
-			Object value = cbo.getEditor().getItem();
+			Object value = cbo.isEditable() ? cbo.getEditor().getItem() : cbo.getSelectedItem();
 			return value != null ? value.toString().trim() : "";
 		}
 	}
