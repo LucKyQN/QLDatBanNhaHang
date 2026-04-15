@@ -12,4 +12,5 @@ public class BanAnModel {
 
 	public long tienCoc;
 	public long tienMonDatTruoc;
+	public String maPhieuDatBan;
 }

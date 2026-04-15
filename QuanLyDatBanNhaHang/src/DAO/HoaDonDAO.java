@@ -23,11 +23,11 @@ public class HoaDonDAO {
 		List<BanAnModel> list = new ArrayList<>();
 
 		String sql = "SELECT b.maBan, b.tenBan, b.sucChua, h.maHD, h.tenKhachLe, h.sdtKhachLe, h.ngayGioLap, "
+				+ "       h.maPhieuDatBan, "
 				+ "       (SELECT COALESCE(SUM(thanhTien), 0) FROM ChiTietHoaDon WHERE maHD = h.maHD) AS tamTinh, "
 				+ "       ISNULL(p.tienCoc, 0) AS tienCoc, " + "       ISNULL(p.tienMonDatTruoc, 0) AS tienMonDatTruoc "
-				+ "FROM BanAn b " + "INNER JOIN HoaDon h ON b.maBan = h.maBan " + "OUTER APPLY ( "
-				+ "    SELECT TOP 1 tienCoc, tienMonDatTruoc " + "    FROM PhieuDatBan p "
-				+ "    WHERE p.maBan = b.maBan AND p.trangThai = N'Đã đến' " + "    ORDER BY p.ngayTao DESC " + ") p "
+				+ "FROM BanAn b " + "INNER JOIN HoaDon h ON b.maBan = h.maBan "
+				+ "LEFT JOIN PhieuDatBan p ON h.maPhieuDatBan = p.maPhieu "
 				+ "WHERE h.trangThaiThanhToan IN (N'Chưa thanh toán', N'Chờ thanh toán') "
 				+ "AND b.trangThai IN (N'Có khách', N'Chờ thanh toán') "
 				+ "AND (SELECT COALESCE(SUM(thanhTien), 0) FROM ChiTietHoaDon WHERE maHD = h.maHD) > 0";
@@ -43,6 +43,7 @@ public class HoaDonDAO {
 				ban.tenBan = rs.getString("tenBan");
 				ban.sucChua = rs.getInt("sucChua");
 				ban.maHD = rs.getString("maHD");
+				ban.maPhieuDatBan = rs.getString("maPhieuDatBan");
 				ban.tenKH = rs.getString("tenKhachLe");
 				ban.sdt = rs.getString("sdtKhachLe");
 				ban.tienCoc = (long) rs.getDouble("tienCoc");
@@ -479,10 +480,11 @@ public class HoaDonDAO {
 		}
 	}
 
-	public boolean taoHoaDonMoi(String maHD, String maNV, String maBan, String tenKH, String sdt, int soNguoi) {
+	public boolean taoHoaDonMoi(String maHD, String maNV, String maBan, String tenKH, String sdt, int soNguoi,
+			String maPhieuDatBan) {
 		String sql = "INSERT INTO HoaDon "
-				+ "(maHD, maNV, maBan, ngayGioLap, trangThaiThanhToan, tongTien, tenKhachLe, sdtKhachLe, soLuongKhach) "
-				+ "VALUES (?, ?, ?, GETDATE(), N'Chưa thanh toán', 0, ?, ?, ?)";
+				+ "(maHD, maNV, maBan, ngayGioLap, trangThaiThanhToan, tongTien, tenKhachLe, sdtKhachLe, soLuongKhach, maPhieuDatBan) "
+				+ "VALUES (?, ?, ?, GETDATE(), N'Chưa thanh toán', 0, ?, ?, ?, ?)";
 
 		try {
 			Connection con = getConnection();
@@ -494,6 +496,7 @@ public class HoaDonDAO {
 			stmt.setString(4, tenKH);
 			stmt.setString(5, sdt);
 			stmt.setInt(6, soNguoi);
+			stmt.setString(7, maPhieuDatBan); // null nếu mở bàn trực tiếp
 
 			int rows = stmt.executeUpdate();
 			stmt.close();

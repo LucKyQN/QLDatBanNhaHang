@@ -41,6 +41,7 @@ public class FrmDashBoard extends JFrame {
 	private FrmQLKhuyenMai pnlKhuyenMai;
 	private FrmBaoCaoDoanhThu pnlBaoCao;
 	private FrmQLSoDoBan pnlSoDoBan;
+	private FrmCaiDat pnlCaiDat;
 	private final Map<String, JPanel> menuMap = new LinkedHashMap<>();
 	private String activeMenu = "Dashboard";
 	private final HoaDonDAO hoaDonDAO = new HoaDonDAO();
@@ -288,8 +289,7 @@ public class FrmDashBoard extends JFrame {
 							"Quản Lý Sơ Đồ Bàn");
 					break;
 				case "Cài đặt":
-					JOptionPane.showMessageDialog(FrmDashBoard.this, "Chức năng Cài đặt sẽ được phát triển sau.",
-							"Thông báo", JOptionPane.INFORMATION_MESSAGE);
+					showPage("CAIDAT", "Cài đặt", "Quản lý tài khoản và cấu hình hệ thống", "Cài đặt");
 					break;
 				}
 			}
@@ -328,6 +328,7 @@ public class FrmDashBoard extends JFrame {
 		pnlKhuyenMai = new FrmQLKhuyenMai();
 		pnlBaoCao = new FrmBaoCaoDoanhThu();
 		pnlSoDoBan = new FrmQLSoDoBan();
+		pnlCaiDat = new FrmCaiDat();
 		contentPanel.add(dashboardPanel, "DASHBOARD");
 		contentPanel.add(pnlNhanVien, "NHANVIEN");
 		contentPanel.add(pnlMonAn, "MONAN");
@@ -335,7 +336,7 @@ public class FrmDashBoard extends JFrame {
 		contentPanel.add(pnlKhuyenMai, "KHUYENMAI");
 		contentPanel.add(pnlBaoCao, "BAOCAO");
 		contentPanel.add(pnlSoDoBan, "SODOBAN");
-
+		contentPanel.add(pnlCaiDat, "CAIDAT");
 		main.add(contentPanel, BorderLayout.CENTER);
 		return main;
 	}
@@ -784,4 +785,5 @@ public class FrmDashBoard extends JFrame {
 	private String formatTien(long soTien) {
 		return String.format("%,d", soTien).replace(",", ".");
 	}
+
 }

@@ -47,19 +47,19 @@ public class FrmLeTan extends JFrame {
 	private static final Color BORDER_CLR = new Color(230, 230, 230);
 	private static final Color TEXT_DARK = new Color(40, 40, 40);
 	private static final Color TEXT_GRAY = new Color(120, 120, 120);
-	
+
 	// Màu cho bàn TRỐNG (Xanh lá)
 	private static final Color BG_TRONG = new Color(220, 252, 231);
 	private static final Color BORDER_TRONG = new Color(34, 197, 94);
-	
+
 	// Màu cho bàn CÓ KHÁCH (Đỏ)
 	private static final Color BG_KHACH = new Color(254, 226, 226);
 	private static final Color BORDER_KHACH = new Color(239, 68, 68);
-	
+
 	// Màu cho bàn ĐÃ ĐẶT (Vàng)
 	private static final Color BG_DAT = new Color(254, 249, 195);
 	private static final Color BORDER_DAT = new Color(234, 179, 8);
-	
+
 	// Màu cho BÀN ĐANG GHÉP (Cam)
 	private static final Color BG_GHEP = new Color(255, 237, 213);
 	private static final Color BORDER_GHEP = new Color(249, 115, 22);
@@ -240,7 +240,7 @@ public class FrmLeTan extends JFrame {
 		cboLocSucChua.setPreferredSize(new Dimension(120, 32));
 		cboLocSucChua.setBackground(Color.WHITE);
 		cboLocSucChua.setCursor(new Cursor(Cursor.HAND_CURSOR));
-		
+
 		// Bắt sự kiện lọc
 		cboLocSucChua.addActionListener(e -> refreshSoDoBan());
 
@@ -256,7 +256,7 @@ public class FrmLeTan extends JFrame {
 		JPanel wrapGrid = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		wrapGrid.setOpaque(false);
 		wrapGrid.add(gridMap);
-		
+
 		refreshSoDoBan();
 
 		JScrollPane scroll = new JScrollPane(wrapGrid);
@@ -272,7 +272,7 @@ public class FrmLeTan extends JFrame {
 
 	private JPanel createTableCard(String maBan, String tenBan, int capacity, String status) {
 		Color bg, border;
-		
+
 		// Áp dụng màu sắc dựa theo trạng thái bàn
 		if (status.equalsIgnoreCase("Trống")) {
 			bg = BG_TRONG;
@@ -357,10 +357,10 @@ public class FrmLeTan extends JFrame {
 				} else if (status.equalsIgnoreCase("Đang ghép")) {
 					// Xử lý khi click vào Bàn Đang Ghép (Cam)
 					String msg = "Bàn này đang được ghép chung hóa đơn với bàn khác.\n"
-							   + "Khách đã thanh toán xong và bạn muốn dọn bàn này về trạng thái TRỐNG?";
-					int choice = JOptionPane.showConfirmDialog(FrmLeTan.this, msg, "Giải phóng bàn ghép", 
+							+ "Khách đã thanh toán xong và bạn muốn dọn bàn này về trạng thái TRỐNG?";
+					int choice = JOptionPane.showConfirmDialog(FrmLeTan.this, msg, "Giải phóng bàn ghép",
 							JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-					
+
 					if (choice == JOptionPane.YES_OPTION) {
 						banAnDAO.capNhatTrangThai(maBan, "Trống");
 						refreshSoDoBan();
@@ -381,18 +381,18 @@ public class FrmLeTan extends JFrame {
 			String ten = dlg.getTen();
 			String sdt = dlg.getSDT();
 			int soNguoi = dlg.getSoNguoi();
-			
+
 			// ==========================================================
 			// LOGIC KIỂM TRA SỨC CHỨA BÀN KHI TẠO MỚI (MỞ BÀN TRỰC TIẾP)
 			// ==========================================================
 			if (soNguoi > capacity) {
-				String msgCanhBao = "Bàn " + tenBan + " chỉ có sức chứa " + capacity + " người.\n"
-						          + "Số lượng " + soNguoi + " khách đã vượt quá mức quy định.\n\n"
-						          + "Bạn có muốn tiếp tục xếp khách vào bàn này (kê thêm ghế) không?";
-				
-				int choice = JOptionPane.showConfirmDialog(this, msgCanhBao, "Cảnh báo vượt sức chứa", 
+				String msgCanhBao = "Bàn " + tenBan + " chỉ có sức chứa " + capacity + " người.\n" + "Số lượng "
+						+ soNguoi + " khách đã vượt quá mức quy định.\n\n"
+						+ "Bạn có muốn tiếp tục xếp khách vào bàn này (kê thêm ghế) không?";
+
+				int choice = JOptionPane.showConfirmDialog(this, msgCanhBao, "Cảnh báo vượt sức chứa",
 						JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-				
+
 				if (choice != JOptionPane.YES_OPTION) {
 					return; // Lễ tân chọn NO -> Hủy mở bàn
 				}
@@ -401,12 +401,12 @@ public class FrmLeTan extends JFrame {
 
 			String maHD = "HD" + System.currentTimeMillis();
 			String maNV = "NV005";
-			
+
 			if (Entity.LuuLog.nhanVienDangNhap != null) {
 				maNV = Entity.LuuLog.nhanVienDangNhap.getMaNV();
 			}
 
-			boolean result = hoaDonDAO.taoHoaDonMoi(maHD, maNV, maBan, ten, sdt, soNguoi);
+			boolean result = hoaDonDAO.taoHoaDonMoi(maHD, maNV, maBan, ten, sdt, soNguoi, null);
 
 			if (result) {
 				banAnDAO.capNhatTrangThai(maBan, "Có khách");
@@ -568,7 +568,7 @@ public class FrmLeTan extends JFrame {
 	}
 
 	private void xuLyCheckIn(String maPhieu, String tenKhach, String maBan, String tenBan, JPanel cardRef) {
-		
+
 		String sdtKhach = "0000000000";
 		int soLuongKhach = 1;
 
@@ -586,28 +586,29 @@ public class FrmLeTan extends JFrame {
 		// ==========================================================
 		int capacity = 0;
 		List<BanAn> allBan = banAnDAO.getAllBanAn();
-		for(BanAn ban : allBan) {
-			if(ban.getMaBan().equals(maBan)) {
+		for (BanAn ban : allBan) {
+			if (ban.getMaBan().equals(maBan)) {
 				capacity = ban.getSucChua();
 				break;
 			}
 		}
 
 		if (soLuongKhach > capacity) {
-			String msgCanhBao = "Bàn " + tenBan + " chỉ có sức chứa " + capacity + " người.\n"
-					          + "Khách đặt " + soLuongKhach + " người, đã vượt quá sức chứa.\n\n"
-					          + "Bạn có muốn tiếp tục check-in (kê thêm ghế) không?";
-			
-			int choice = JOptionPane.showConfirmDialog(cardRef, msgCanhBao, "Cảnh báo vượt sức chứa", 
+			String msgCanhBao = "Bàn " + tenBan + " chỉ có sức chứa " + capacity + " người.\n" + "Khách đặt "
+					+ soLuongKhach + " người, đã vượt quá sức chứa.\n\n"
+					+ "Bạn có muốn tiếp tục check-in (kê thêm ghế) không?";
+
+			int choice = JOptionPane.showConfirmDialog(cardRef, msgCanhBao, "Cảnh báo vượt sức chứa",
 					JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-			
+
 			if (choice != JOptionPane.YES_OPTION) {
 				return; // Dừng lại nếu bấm NO
 			}
 		} else {
 			// Nếu sức chứa bình thường thì hỏi xác nhận check-in như cũ
-			int check = JOptionPane.showConfirmDialog(cardRef, "Check-in cho khách " + tenKhach + " vào " + tenBan + "?",
-					"Xác nhận Check-in", JOptionPane.YES_NO_OPTION);
+			int check = JOptionPane.showConfirmDialog(cardRef,
+					"Check-in cho khách " + tenKhach + " vào " + tenBan + "?", "Xác nhận Check-in",
+					JOptionPane.YES_NO_OPTION);
 
 			if (check != JOptionPane.YES_OPTION)
 				return;
@@ -617,8 +618,7 @@ public class FrmLeTan extends JFrame {
 		String maHD = "HD" + System.currentTimeMillis();
 		String maNV = (LuuLog.nhanVienDangNhap != null) ? LuuLog.nhanVienDangNhap.getMaNV() : "NV001";
 
-		boolean hdOk = hoaDonDAO.taoHoaDonMoi(maHD, maNV, maBan, tenKhach, sdtKhach, soLuongKhach);
-
+		boolean hdOk = hoaDonDAO.taoHoaDonMoi(maHD, maNV, maBan, tenKhach, sdtKhach, soLuongKhach, maPhieu);
 		boolean copyMonOk = false;
 		if (hdOk) {
 			copyMonOk = hoaDonDAO.copyMonAnTuPhieuSangHoaDon(maBan, maHD);
@@ -671,10 +671,9 @@ public class FrmLeTan extends JFrame {
 			String sl = infoKhach[2];
 			String gio = infoKhach[3];
 
-			String msg = "🏮 NHÀ HÀNG NGÓI ĐỎ 🏮\n"
-					+ "Bàn: " + tenBan + "\n" + "Khách hàng: " + (ten != null ? ten : "Khách lẻ") + "\n"
-					+ "Số điện thoại: " + (sdt != null ? sdt : "Trống") + "\n" + "Số lượng: " + sl + " người\n"
-					+ "Giờ vào bàn: " + gio + "\n";
+			String msg = "🏮 NHÀ HÀNG NGÓI ĐỎ 🏮\n" + "Bàn: " + tenBan + "\n" + "Khách hàng: "
+					+ (ten != null ? ten : "Khách lẻ") + "\n" + "Số điện thoại: " + (sdt != null ? sdt : "Trống") + "\n"
+					+ "Số lượng: " + sl + " người\n" + "Giờ vào bàn: " + gio + "\n";
 
 			JOptionPane.showMessageDialog(this, msg, "Thông tin khách đang ngồi", JOptionPane.INFORMATION_MESSAGE);
 		} else {
@@ -704,9 +703,9 @@ public class FrmLeTan extends JFrame {
 		for (Entity.BanAn ban : danhSachBan) {
 			String viTri = ban.getViTri();
 			if (viTri != null && viTri.trim().equalsIgnoreCase(currentTab)) {
-				
+
 				boolean showTable = true;
-				
+
 				// 3. Logic Lọc
 				if (requiredCap > 0) {
 					// Ẩn bàn nếu bàn không TRỐNG hoặc sức chứa nhỏ hơn yêu cầu
@@ -718,11 +717,12 @@ public class FrmLeTan extends JFrame {
 
 				// 4. Nếu qua được bộ lọc thì thêm vào giao diện
 				if (showTable) {
-					gridMap.add(createTableCard(ban.getMaBan(), ban.getTenBan(), ban.getSucChua(), ban.getTrangThai().trim()));
+					gridMap.add(createTableCard(ban.getMaBan(), ban.getTenBan(), ban.getSucChua(),
+							ban.getTrangThai().trim()));
 				}
 			}
 		}
-		
+
 		gridMap.revalidate();
 		gridMap.repaint();
 	}
