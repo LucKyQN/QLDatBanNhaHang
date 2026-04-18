@@ -496,7 +496,7 @@ public class HoaDonDAO {
 			stmt.setString(4, tenKH);
 			stmt.setString(5, sdt);
 			stmt.setInt(6, soNguoi);
-			stmt.setString(7, maPhieuDatBan); // null nếu mở bàn trực tiếp
+			stmt.setString(7, maPhieuDatBan);
 
 			int rows = stmt.executeUpdate();
 			stmt.close();

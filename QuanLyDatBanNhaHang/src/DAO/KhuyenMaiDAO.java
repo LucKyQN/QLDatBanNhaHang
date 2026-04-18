@@ -76,7 +76,22 @@ public class KhuyenMaiDAO {
 
 		return 0;
 	}
-
+	// Thêm hàm này vào KhuyenMaiDAO.java
+	public int getLuotSuDungCuaKhuyenMai(String maKM) {
+		String sql = "SELECT COUNT(*) FROM HoaDonKhuyenMai WHERE maKM = ?";
+		try {
+			java.sql.Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
+			java.sql.PreparedStatement ps = con.prepareStatement(sql);
+			ps.setString(1, maKM);
+			java.sql.ResultSet rs = ps.executeQuery();
+			if (rs.next()) {
+				return rs.getInt(1);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return 0;
+	}
 	public int getSoSapToi() {
 		String sql = "SELECT COUNT(*) " + "FROM KhuyenMai " + "WHERE trangThai = 1 AND ngayBatDau > GETDATE()";
 
@@ -101,9 +116,23 @@ public class KhuyenMaiDAO {
 		return 0;
 	}
 
-	// Tạm thời chưa có bảng lưu lịch sử sử dụng khuyến mãi
-	// nên trả 0 để FrmQLKhuyenMai không lỗi.
 	public int getLuotSuDungHomNay() {
+		String sql = "SELECT COUNT(*) FROM HoaDonKhuyenMai hk "
+				+ "JOIN HoaDon h ON hk.maHD = h.maHD "
+				+ "WHERE CAST(h.ngayGioThanhToan AS DATE) = CAST(GETDATE() AS DATE) "
+				+ "AND h.trangThaiThanhToan = N'Đã thanh toán'";
+
+		try {
+			java.sql.Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
+			java.sql.PreparedStatement ps = con.prepareStatement(sql);
+			java.sql.ResultSet rs = ps.executeQuery();
+
+			if (rs.next()) {
+				return rs.getInt(1); // Trả về con số đếm được
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		return 0;
 	}
 

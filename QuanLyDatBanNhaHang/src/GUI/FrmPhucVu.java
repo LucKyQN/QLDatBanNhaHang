@@ -104,7 +104,7 @@ public class FrmPhucVu extends JFrame {
 		bar.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_CLR),
 				new EmptyBorder(14, 20, 14, 24)));
 
-		// --- BÊN TRÁI: LOGO & TIÊU ĐỀ (Đã bỏ nút Quay lại) ---
+		// --- BÊN TRÁI: LOGO & TIÊU ĐỀ
 		JPanel west = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
 		west.setOpaque(false);
 		JLabel lblLogo = new JLabel("🏮");
@@ -392,7 +392,8 @@ public class FrmPhucVu extends JFrame {
 
 			if (c == JOptionPane.YES_OPTION) {
 				if (phucVuService.yeuCauThanhToan(ban.maHD, ban.maBan)) {
-					JOptionPane.showMessageDialog(this, "✅ Đã gửi yêu cầu!");
+					JOptionPane.showMessageDialog(this, "Đã gửi yêu cầu!");
+
 					ban.trangThai = "Chờ thanh toán";
 
 					btnThemMon.setEnabled(false);

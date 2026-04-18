@@ -330,6 +330,8 @@ public class FrmDangNhap extends JFrame {
 
     // MAIN
     public static void main(String[] args) {
+
+
         try {
             ConnectDB.getInstance().connect();
         } catch (Exception e) {

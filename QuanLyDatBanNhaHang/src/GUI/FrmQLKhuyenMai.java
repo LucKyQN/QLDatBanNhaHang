@@ -368,8 +368,10 @@ public class FrmQLKhuyenMai extends JPanel {
 				tt = km.getNgayBatDau() != null && now.before(km.getNgayBatDau()) ? "Sắp tới" : "Đang chạy";
 			}
 
-			model.addRow(new Object[] { km.getTenKM(), km.getMoTaKM() != null ? km.getMoTaKM() : "", giaTriHD, thoiGian,
-					tt, "— lần", "" });
+			// Gọi DB lấy số lượt dùng thật
+			int luotDung = dao.getLuotSuDungCuaKhuyenMai(km.getMaKM());
+
+			model.addRow(new Object[] { km.getTenKM(), km.getMoTaKM() != null ? km.getMoTaKM() : "", giaTriHD, thoiGian, tt, luotDung + " lần", "" });
 		}
 	}
 

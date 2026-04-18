@@ -388,6 +388,20 @@ public class FrmTaoDatCho extends JDialog {
 				return;
 			}
 
+			java.util.Date now = new java.util.Date();
+			long diffMillis = thoiGianDen.getTime() - now.getTime();
+			long diffMinutes = diffMillis / (60 * 1000);
+
+			if (diffMinutes < 60) {
+				JOptionPane.showMessageDialog(this,
+						"Thời gian đặt bàn phải cách hiện tại ít nhất 60 phút!\n"
+								+ "Thời gian sớm nhất có thể đặt: "
+								+ new java.text.SimpleDateFormat("HH:mm dd/MM/yyyy")
+								.format(new java.util.Date(now.getTime() + 60 * 60 * 1000)),
+						"Thời gian không hợp lệ", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+
 			double tienMonDatTruoc = tongTien;
 			double tienCoc = PHI_DAT_BAN_CO_DINH + Math.round(tongTien * 0.3);
 
@@ -437,7 +451,7 @@ public class FrmTaoDatCho extends JDialog {
 			if (phieuOk && donOk && ctOk) {
 				if (banDAO.capNhatTrangThai(maBan, "Đã đặt")) {
 					JOptionPane.showMessageDialog(this,
-							"✅ Đặt chỗ thành công cho " + tenKhach + " tại " + tenHienThi + "!\nTiền món đặt trước: "
+							"Đặt chỗ thành công cho " + tenKhach + " tại " + tenHienThi + "!\nTiền món đặt trước: "
 									+ formatMoney((int) tienMonDatTruoc) + "\nTổng tiền cọc cần thu: "
 									+ formatMoney((int) tienCoc));
 

@@ -411,7 +411,7 @@ public class FrmDashBoard extends JFrame {
 		pnlMonAn = new FrmQLMonAn();
 		pnlBanAn = new FrmQLBanAn();
 		pnlKhuyenMai = new FrmQLKhuyenMai();
-		pnlBaoCao = new FrmBaoCaoDoanhThu();
+		pnlBaoCao = new FrmBaoCaoDoanhThu(tenNhanVien);
 		pnlSoDoBan = new FrmQLSoDoBan();
 		pnlCaiDat = new FrmCaiDat();
 		contentPanel.add(dashboardPanel, "DASHBOARD");

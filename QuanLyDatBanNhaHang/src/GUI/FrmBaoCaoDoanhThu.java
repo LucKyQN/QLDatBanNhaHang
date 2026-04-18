@@ -30,6 +30,7 @@ import java.io.FileOutputStream;
 public class FrmBaoCaoDoanhThu extends JPanel {
 
 	private final HoaDonDAO hoaDonDAO = new HoaDonDAO();
+	private final String tenNhanVien;
 
 	private static final Color RED_MAIN = new Color(220, 38, 38);
 	private static final Color BG_MAIN = new Color(248, 248, 248);
@@ -55,7 +56,9 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 	private List<String[]> currentTopMon = new ArrayList<>();
 	private List<String[]> currentPhanBo = new ArrayList<>();
 
-	public FrmBaoCaoDoanhThu() {
+	public FrmBaoCaoDoanhThu(String tenNhanVien) {
+		this.tenNhanVien = tenNhanVien;
+
 		initUI();
 		loadData();
 	}
@@ -326,7 +329,7 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 		Document document = new Document(PageSize.A4, 36, 36, 36, 36);
 
 		try {
-			PdfWriter.getInstance(document, new FileOutputStream(file));
+			PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(file));
 			document.open();
 
 			com.lowagie.text.Font fontTitle = taoFontUnicode(18, com.lowagie.text.Font.BOLD);
@@ -334,34 +337,92 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 			com.lowagie.text.Font fontBold = taoFontUnicode(12, com.lowagie.text.Font.BOLD);
 			com.lowagie.text.Font fontNormal = taoFontUnicode(11, com.lowagie.text.Font.NORMAL);
 
-			Paragraph title = new Paragraph("BÁO CÁO DOANH THU", fontTitle);
+			// --- HEADER BÁO CÁO ---
+			Paragraph title = new Paragraph("BÁO CÁO DOANH THU NHÀ HÀNG NGÓI ĐỎ", fontTitle);
 			title.setAlignment(Element.ALIGN_CENTER);
 			document.add(title);
 
 			document.add(new Paragraph("Kỳ báo cáo: " + cboPeriod.getSelectedItem(), fontSub));
-			document.add(new Paragraph("Ngày xuất: " + new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date()),
-					fontSub));
+			document.add(new Paragraph("Ngày xuất báo cáo: " + new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date()), fontSub));
+			document.add(new Paragraph("Người xuất: " + tenNhanVien, fontSub));
+			document.add(new Paragraph("---------------------------------------------------------------------------------------------------------", fontNormal));
 			document.add(new Paragraph(" "));
 
-			document.add(new Paragraph("1. THỐNG KÊ TỔNG QUAN", fontBold));
-			document.add(new Paragraph("Tổng doanh thu: " + formatTienPDF(currentTongDT) + " đ", fontNormal));
-			document.add(new Paragraph("Số đơn hàng: " + currentSoDon, fontNormal));
-			document.add(new Paragraph("Giá trị trung bình / đơn: " + formatTienPDF(currentGiaTB) + " đ", fontNormal));
-			document.add(new Paragraph("Số khách hàng: " + currentSoKH, fontNormal));
+			// --- PHẦN 1: THỐNG KÊ TỔNG QUAN ---
+			document.add(new Paragraph("1. THỐNG KÊ TỔNG QUAN KINH DOANH", fontBold));
 			document.add(new Paragraph(" "));
 
-			document.add(new Paragraph("2. PHÂN BỐ DOANH THU THEO DANH MỤC", fontBold));
+			PdfPTable tTongQuan = new PdfPTable(4);
+			tTongQuan.setWidthPercentage(100);
+			tTongQuan.addCell(taoCell("TỔNG DOANH THU", fontBold, Element.ALIGN_CENTER));
+			tTongQuan.addCell(taoCell("SỐ ĐƠN HÀNG", fontBold, Element.ALIGN_CENTER));
+			tTongQuan.addCell(taoCell("GIÁ TRỊ TRUNG BÌNH/ĐƠN", fontBold, Element.ALIGN_CENTER));
+			tTongQuan.addCell(taoCell("SỐ KHÁCH HÀNG", fontBold, Element.ALIGN_CENTER));
+
+			tTongQuan.addCell(taoCell(formatTienPDF(currentTongDT) + " đ", fontNormal, Element.ALIGN_CENTER));
+			tTongQuan.addCell(taoCell(String.valueOf(currentSoDon), fontNormal, Element.ALIGN_CENTER));
+			tTongQuan.addCell(taoCell(formatTienPDF(currentGiaTB) + " đ", fontNormal, Element.ALIGN_CENTER));
+			tTongQuan.addCell(taoCell(String.valueOf(currentSoKH), fontNormal, Element.ALIGN_CENTER));
+			document.add(tTongQuan);
+			document.add(new Paragraph(" "));
+
+			// --- PHẦN 2: CHỤP ẢNH BIỂU ĐỒ ---
+			document.add(new Paragraph("2. BIỂU ĐỒ TRỰC QUAN", fontBold));
+			document.add(new Paragraph(" "));
+
+			PdfPTable tChart = new PdfPTable(2);
+			tChart.setWidthPercentage(100);
+			tChart.setWidths(new float[]{1f, 1f});
+
+			try {
+				// Chụp ảnh Line Chart
+				int wLine = lineChart.getWidth();
+				int hLine = lineChart.getHeight();
+				java.awt.image.BufferedImage imgLine = new java.awt.image.BufferedImage(wLine, hLine, java.awt.image.BufferedImage.TYPE_INT_RGB);
+				Graphics2D gLine = imgLine.createGraphics();
+				lineChart.paint(gLine);
+				gLine.dispose();
+				com.lowagie.text.Image pdfImgLine = com.lowagie.text.Image.getInstance(imgLine, null);
+
+				// Chụp ảnh Pie Chart
+				int wPie = pieChart.getWidth();
+				int hPie = pieChart.getHeight();
+				java.awt.image.BufferedImage imgPie = new java.awt.image.BufferedImage(wPie, hPie, java.awt.image.BufferedImage.TYPE_INT_RGB);
+				Graphics2D gPie = imgPie.createGraphics();
+				pieChart.paint(gPie);
+				gPie.dispose();
+				com.lowagie.text.Image pdfImgPie = com.lowagie.text.Image.getInstance(imgPie, null);
+
+				// Gắn ảnh vào bảng (để 2 ảnh nằm ngang nhau)
+				PdfPCell cellLine = new PdfPCell(pdfImgLine, true);
+				cellLine.setBorder(com.lowagie.text.Rectangle.NO_BORDER);
+				cellLine.setPadding(5);
+				tChart.addCell(cellLine);
+
+				PdfPCell cellPie = new PdfPCell(pdfImgPie, true);
+				cellPie.setBorder(com.lowagie.text.Rectangle.NO_BORDER);
+				cellPie.setPadding(5);
+				tChart.addCell(cellPie);
+
+				document.add(tChart);
+			} catch (Exception e) {
+				System.err.println("Lỗi chụp biểu đồ: " + e.getMessage());
+			}
+			document.add(new Paragraph(" "));
+
+			// --- PHẦN 3: CHI TIẾT DANH MỤC ---
+			document.add(new Paragraph("3. PHÂN BỐ DOANH THU THEO DANH MỤC", fontBold));
 			if (currentPhanBo.isEmpty()) {
 				document.add(new Paragraph("Chưa có dữ liệu.", fontNormal));
 			} else {
 				for (String[] row : currentPhanBo) {
-					document.add(new Paragraph("- " + row[0] + ": " + formatTienPDF(Long.parseLong(row[1])) + " đ",
-							fontNormal));
+					document.add(new Paragraph("    • " + row[0] + ": " + formatTienPDF(Long.parseLong(row[1])) + " đ", fontNormal));
 				}
 			}
 			document.add(new Paragraph(" "));
 
-			document.add(new Paragraph("3. TOP MÓN ĂN BÁN CHẠY", fontBold));
+			// --- PHẦN 4: TOP MÓN BÁN CHẠY (Chuyển sang trang mới nếu cần) ---
+			document.add(new Paragraph("4. BẢNG XẾP HẠNG TOP MÓN ĂN BÁN CHẠY NHẤT", fontBold));
 			document.add(new Paragraph(" "));
 
 			PdfPTable table = new PdfPTable(5);
@@ -390,10 +451,19 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 
 			document.add(table);
 
+			// --- KẾT THÚC ---
+			document.add(new Paragraph("\n"));
+			Paragraph signature = new Paragraph("Người lập báo cáo\n\n\n(Ký và ghi rõ họ tên)", fontNormal);
+			signature.setAlignment(Element.ALIGN_RIGHT);
+			document.add(signature);
+
 			document.close();
 
 			JOptionPane.showMessageDialog(this, "Xuất báo cáo PDF thành công!\nFile: " + file.getAbsolutePath(),
 					"Thành công", JOptionPane.INFORMATION_MESSAGE);
+
+			// Tự động mở file sau khi xuất
+			java.awt.Desktop.getDesktop().open(file);
 
 		} catch (Exception ex) {
 			ex.printStackTrace();

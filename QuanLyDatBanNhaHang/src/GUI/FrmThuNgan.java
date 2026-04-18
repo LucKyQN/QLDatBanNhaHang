@@ -27,7 +27,7 @@ import com.lowagie.text.Phrase;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
-
+import com.lowagie.text.pdf.BaseFont;
 @SuppressWarnings("serial")
 public class FrmThuNgan extends JFrame {
 
@@ -615,111 +615,138 @@ public class FrmThuNgan extends JFrame {
 		return p;
 	}
 
+	// ==================== CODE XUẤT HÓA ĐƠN MỚI ====================
 	private void xuatHoaDonPDF(BanAnModel ban, List<MonAnModel> dsMon, long khachDua, long tienThua) {
 		JFileChooser chooser = new JFileChooser();
 		chooser.setDialogTitle("Chọn nơi lưu hóa đơn PDF");
 		chooser.setSelectedFile(new File("HoaDon_" + ban.tenBan.replaceAll("\\s+", "_") + "_" + ban.maHD + ".pdf"));
 
 		int result = chooser.showSaveDialog(this);
-		if (result != JFileChooser.APPROVE_OPTION) {
-			return;
-		}
+		if (result != JFileChooser.APPROVE_OPTION) return;
 
 		File file = chooser.getSelectedFile();
 		if (!file.getName().toLowerCase().endsWith(".pdf")) {
 			file = new File(file.getAbsolutePath() + ".pdf");
 		}
 
-		Document document = new Document(PageSize.A4, 40, 40, 50, 40);
+		// Dùng giấy A5 nhìn giống hóa đơn nhà hàng (bill) hơn A4
+		Document document = new Document(PageSize.A5, 20, 20, 30, 30);
 
 		try {
 			PdfWriter.getInstance(document, new FileOutputStream(file));
 			document.open();
 
-			com.lowagie.text.Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
-			com.lowagie.text.Font subFont = FontFactory.getFont(FontFactory.HELVETICA, 11);
-			com.lowagie.text.Font boldFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
-			com.lowagie.text.Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 12);
+			// 1. NẠP FONT ARIAL CỦA WINDOWS ĐỂ VIẾT TIẾNG VIỆT
+			BaseFont bf = BaseFont.createFont("C:\\Windows\\Fonts\\arial.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+			com.lowagie.text.Font fontTitle = new com.lowagie.text.Font(bf, 16, com.lowagie.text.Font.BOLD);
+			com.lowagie.text.Font fontBold = new com.lowagie.text.Font(bf, 11, com.lowagie.text.Font.BOLD);
+			com.lowagie.text.Font fontNormal = new com.lowagie.text.Font(bf, 10, com.lowagie.text.Font.NORMAL);
+			com.lowagie.text.Font fontItalic = new com.lowagie.text.Font(bf, 10, com.lowagie.text.Font.ITALIC);
 
-			Paragraph title = new Paragraph("NHA HANG NGOI DO", titleFont);
+			// 2. HEADER NHÀ HÀNG
+			Paragraph title = new Paragraph("NHÀ HÀNG NGÓI ĐỎ", fontTitle);
 			title.setAlignment(Element.ALIGN_CENTER);
 			document.add(title);
 
-			Paragraph sub = new Paragraph("Hoa don thanh toan", subFont);
+			Paragraph sub = new Paragraph("HÓA ĐƠN THANH TOÁN\n---------------------------------------------------", fontNormal);
 			sub.setAlignment(Element.ALIGN_CENTER);
-			sub.setSpacingAfter(15);
+			sub.setSpacingAfter(10);
 			document.add(sub);
 
-			document.add(new Paragraph("Ma hoa don: " + ban.maHD, normalFont));
-			document.add(new Paragraph("Ban: " + ban.tenBan, normalFont));
-			document.add(
-					new Paragraph("Khach hang: " + (ban.tenKH != null ? ban.tenKH : "Khach vang lai"), normalFont));
-			document.add(new Paragraph("So dien thoai: " + (ban.sdt != null ? ban.sdt : ""), normalFont));
-			document.add(new Paragraph("Gio vao: " + (ban.gioVao != null ? ban.gioVao : "--:--"), normalFont));
-			document.add(new Paragraph("Gio ra: " + new SimpleDateFormat("HH:mm dd/MM/yyyy").format(new Date()),
-					normalFont));
-			document.add(new Paragraph("Thu ngan: " + tenNhanVien, normalFont));
-			document.add(new Paragraph(" "));
+			// 3. THÔNG TIN HÓA ĐƠN
+			document.add(new Paragraph("Mã hóa đơn: " + ban.maHD, fontNormal));
+			document.add(new Paragraph("Bàn: " + ban.tenBan, fontNormal));
+			document.add(new Paragraph("Khách hàng: " + (ban.tenKH != null ? ban.tenKH : "Khách vãng lai"), fontNormal));
+			document.add(new Paragraph("Giờ vào: " + (ban.gioVao != null ? ban.gioVao : "--:--"), fontNormal));
+			document.add(new Paragraph("Giờ ra: " + new SimpleDateFormat("HH:mm dd/MM/yyyy").format(new Date()), fontNormal));
+			document.add(new Paragraph("Thu ngân: " + tenNhanVien, fontNormal));
+			document.add(new Paragraph("-----------------------------------------------------------------------------------------", fontNormal));
 
-			PdfPTable table = new PdfPTable(new float[] { 4f, 1.2f, 2f });
+			// 4. BẢNG MÓN ĂN
+			PdfPTable table = new PdfPTable(new float[] { 4f, 1f, 2f });
 			table.setWidthPercentage(100);
+			table.setSpacingBefore(5);
+			table.setSpacingAfter(5);
 
-			table.addCell(createHeaderCell("Mon an"));
-			table.addCell(createHeaderCell("SL"));
-			table.addCell(createHeaderCell("Thanh tien"));
+			table.addCell(createCell("Tên món", fontBold, Element.ALIGN_LEFT, true));
+			table.addCell(createCell("SL", fontBold, Element.ALIGN_CENTER, true));
+			table.addCell(createCell("Thành tiền", fontBold, Element.ALIGN_RIGHT, true));
 
 			for (MonAnModel mon : dsMon) {
-				table.addCell(createBodyCell(mon.tenMonAn));
-				table.addCell(createBodyCell(String.valueOf(mon.soLuong), Element.ALIGN_CENTER));
-				table.addCell(createBodyCell(formatTien(mon.thanhTien) + " d", Element.ALIGN_RIGHT));
+				table.addCell(createCell(mon.tenMonAn, fontNormal, Element.ALIGN_LEFT, false));
+				table.addCell(createCell(String.valueOf(mon.soLuong), fontNormal, Element.ALIGN_CENTER, false));
+				table.addCell(createCell(formatTien(mon.thanhTien), fontNormal, Element.ALIGN_RIGHT, false));
 			}
-
 			document.add(table);
-			document.add(new Paragraph(" "));
+			document.add(new Paragraph("-----------------------------------------------------------------------------------------", fontNormal));
 
-			String tenKM = cboKM_Current != null && cboKM_Current.getSelectedItem() != null
-					? cboKM_Current.getSelectedItem().toString()
-					: "Khong";
+			// 5. PHẦN TỔNG TIỀN (Căn lề phải)
+			PdfPTable tSummary = new PdfPTable(new float[] { 3f, 2f });
+			tSummary.setWidthPercentage(100);
 
-			document.add(new Paragraph("Tam tinh: " + formatTien(giaTriTamTinh) + " d", normalFont));
-			document.add(new Paragraph("Khuyen mai: " + tenKM + " (" + lbGiamGia.getText() + ")", normalFont));
-			document.add(new Paragraph("Phi dich vu: " + lbPhiDV.getText(), normalFont));
-			document.add(new Paragraph("VAT: " + lbVAT.getText(), normalFont));
-			document.add(new Paragraph("Tong cong: " + formatTien(tongCuoiCung) + " d", boldFont));
-			document.add(new Paragraph("Da coc: -" + formatTien(ban.tienCoc) + " d", normalFont));
-			document.add(new Paragraph("Con phai thanh toan: " + formatTien(soTienCanThu) + " d", boldFont));
-			document.add(new Paragraph("Hoan lai khach: " + formatTien(soTienHoanKhach) + " d", normalFont));
-			document.add(new Paragraph("Khach dua: " + formatTien(khachDua) + " d", normalFont));
-			document.add(new Paragraph("Tien thua: " + formatTien(tienThua) + " d", normalFont));
+			String tenKM = cboKM_Current != null && cboKM_Current.getSelectedItem() != null ? cboKM_Current.getSelectedItem().toString() : "Không";
 
-			document.add(new Paragraph(" "));
-			Paragraph thanks = new Paragraph("Cam on quy khach va hen gap lai!", boldFont);
+			tSummary.addCell(createCell("Tạm tính:", fontNormal, Element.ALIGN_RIGHT, false));
+			tSummary.addCell(createCell(formatTien(giaTriTamTinh), fontNormal, Element.ALIGN_RIGHT, false));
+
+			tSummary.addCell(createCell("Khuyến mãi (" + tenKM + "):", fontNormal, Element.ALIGN_RIGHT, false));
+			tSummary.addCell(createCell(lbGiamGia.getText().replace(" đ", ""), fontNormal, Element.ALIGN_RIGHT, false));
+
+			tSummary.addCell(createCell("Phí dịch vụ:", fontNormal, Element.ALIGN_RIGHT, false));
+			tSummary.addCell(createCell(lbPhiDV.getText().replace(" đ", ""), fontNormal, Element.ALIGN_RIGHT, false));
+
+			tSummary.addCell(createCell("VAT:", fontNormal, Element.ALIGN_RIGHT, false));
+			tSummary.addCell(createCell(lbVAT.getText().replace(" đ", ""), fontNormal, Element.ALIGN_RIGHT, false));
+
+			tSummary.addCell(createCell("TỔNG CỘNG:", fontBold, Element.ALIGN_RIGHT, false));
+			tSummary.addCell(createCell(formatTien(tongCuoiCung), fontBold, Element.ALIGN_RIGHT, false));
+
+			tSummary.addCell(createCell("Đã cọc:", fontNormal, Element.ALIGN_RIGHT, false));
+			tSummary.addCell(createCell("-" + formatTien(ban.tienCoc), fontNormal, Element.ALIGN_RIGHT, false));
+
+			tSummary.addCell(createCell("CẦN THANH TOÁN:", fontBold, Element.ALIGN_RIGHT, false));
+			tSummary.addCell(createCell(formatTien(soTienCanThu), fontBold, Element.ALIGN_RIGHT, false));
+
+			document.add(tSummary);
+			document.add(new Paragraph("-----------------------------------------------------------------------------------------", fontNormal));
+
+			// 6. TIỀN KHÁCH ĐƯA
+			PdfPTable tCus = new PdfPTable(new float[] { 3f, 2f });
+			tCus.setWidthPercentage(100);
+			tCus.addCell(createCell("Khách đưa:", fontNormal, Element.ALIGN_RIGHT, false));
+			tCus.addCell(createCell(formatTien(khachDua), fontNormal, Element.ALIGN_RIGHT, false));
+			tCus.addCell(createCell("Tiền thừa:", fontNormal, Element.ALIGN_RIGHT, false));
+			tCus.addCell(createCell(formatTien(tienThua), fontNormal, Element.ALIGN_RIGHT, false));
+			document.add(tCus);
+
+			// 7. LỜI CẢM ƠN
+			document.add(new Paragraph("\n"));
+			Paragraph thanks = new Paragraph("Cảm ơn Quý khách và hẹn gặp lại!", fontItalic);
 			thanks.setAlignment(Element.ALIGN_CENTER);
 			document.add(thanks);
 
 			JOptionPane.showMessageDialog(this, "Xuất PDF thành công:\n" + file.getAbsolutePath());
 		} catch (Exception e) {
 			e.printStackTrace();
-			JOptionPane.showMessageDialog(this, "Xuất PDF thất bại: " + e.getMessage());
+			JOptionPane.showMessageDialog(this, "Lỗi khi xuất PDF. Đảm bảo máy tính có font Arial.\nChi tiết: " + e.getMessage());
 		} finally {
-			if (document.isOpen()) {
-				document.close();
-			}
+			if (document.isOpen()) document.close();
 		}
 	}
 
-	private PdfPCell createHeaderCell(String text) {
-		com.lowagie.text.Font font = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
-		PdfPCell cell = new PdfPCell(new Phrase(text, font));
-		cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+	// Hàm hỗ trợ vẽ ô bảng PDF tối giản (Bỏ viền)
+	private PdfPCell createCell(String text, com.lowagie.text.Font font, int alignment, boolean isHeader) {
+		PdfPCell cell = new PdfPCell(new Phrase(text != null ? text : "", font));
+		cell.setHorizontalAlignment(alignment);
 		cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-		cell.setPadding(8);
-		cell.setBackgroundColor(new Color(240, 240, 240));
+		cell.setPadding(6);
+		cell.setBorder(com.lowagie.text.Rectangle.NO_BORDER); // Xóa viền đen xấu xí
+		if (isHeader) {
+			cell.setBorder(com.lowagie.text.Rectangle.BOTTOM); // Chỉ để đường gạch ngang dưới header
+			cell.setBorderWidthBottom(1f);
+			cell.setPaddingBottom(8);
+		}
 		return cell;
-	}
-
-	private PdfPCell createBodyCell(String text) {
-		return createBodyCell(text, Element.ALIGN_LEFT);
 	}
 
 	private PdfPCell createBodyCell(String text, int align) {
