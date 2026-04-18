@@ -41,7 +41,7 @@ public class FrmTaoDatCho extends JDialog {
 	public FrmTaoDatCho(JFrame parent) {
 		super(parent, true);
 		setUndecorated(true);
-		setSize(950, 700);
+		setSize(1000, 780);
 		setLocationRelativeTo(parent);
 
 		JPanel root = new JPanel(new BorderLayout());
@@ -124,7 +124,7 @@ public class FrmTaoDatCho extends JDialog {
 			}
 		}
 
-		pnlLeft.add(createInputGroup("Chọn bàn *", cbBan));
+		pnlLeft.add(createInputGroup("Chọn bàn ", cbBan));
 		pnlLeft.add(Box.createVerticalStrut(15));
 
 		txtNote = new JTextArea();
@@ -135,10 +135,12 @@ public class FrmTaoDatCho extends JDialog {
 		scrollNote.setPreferredSize(new Dimension(0, 80));
 		pnlLeft.add(createInputGroup("Ghi chú", scrollNote));
 
-		JPanel pnlRight = new JPanel(new GridLayout(2, 1, 0, 15));
+		// Đổi sang BorderLayout để linh hoạt ép tỷ lệ
+		JPanel pnlRight = new JPanel(new BorderLayout(0, 15));
 		pnlRight.setBackground(Color.WHITE);
 
 		JPanel pnlMenu = new JPanel(new BorderLayout(0, 5));
+		pnlMenu.setPreferredSize(new Dimension(0, 190));
 		pnlMenu.setBackground(Color.WHITE);
 		JLabel lblMenuTitle = new JLabel("Thực đơn (Tùy chọn)");
 		lblMenuTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -187,6 +189,30 @@ public class FrmTaoDatCho extends JDialog {
 		JTable tbDaChon = new JTable(tbModelDaChon);
 		tbDaChon.setRowHeight(25);
 
+		tbDaChon.setToolTipText("Nhấp đúp chuột vào món để GIẢM số lượng hoặc XÓA");
+		tbDaChon.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
+			public void mouseClicked(java.awt.event.MouseEvent e) {
+				if (e.getClickCount() == 2) { // Bắt sự kiện nhấp đúp
+					int row = tbDaChon.getSelectedRow();
+					if (row != -1) {
+						int slCu = Integer.parseInt(tbModelDaChon.getValueAt(row, 2).toString());
+						long donGia = Long.parseLong(tbModelDaChon.getValueAt(row, 3).toString());
+
+						// Trừ tổng tiền
+						tongTien -= donGia;
+
+						if (slCu > 1) {
+							tbModelDaChon.setValueAt(slCu - 1, row, 2);
+						} else {
+							tbModelDaChon.removeRow(row);
+						}
+
+						capNhatTienCoc();
+					}
+				}
+			}
+		});
 		tbDaChon.getColumnModel().getColumn(0).setMinWidth(0);
 		tbDaChon.getColumnModel().getColumn(0).setMaxWidth(0);
 		tbDaChon.getColumnModel().getColumn(0).setWidth(0);
@@ -197,6 +223,7 @@ public class FrmTaoDatCho extends JDialog {
 
 		JScrollPane scrollCart = new JScrollPane(tbDaChon);
 		scrollCart.setBorder(BorderFactory.createLineBorder(BORDER_CLR));
+		scrollCart.setPreferredSize(new Dimension(0, 150));
 		pnlCart.add(scrollCart, BorderLayout.CENTER);
 
 		JPanel pnlBottomRight = new JPanel();
@@ -216,8 +243,9 @@ public class FrmTaoDatCho extends JDialog {
 
 		pnlCart.add(pnlBottomRight, BorderLayout.SOUTH);
 
-		pnlRight.add(pnlMenu);
-		pnlRight.add(pnlCart);
+		pnlRight.add(pnlMenu, BorderLayout.NORTH);
+		pnlRight.add(pnlCart, BorderLayout.CENTER);
+
 
 		body.add(pnlLeft);
 		body.add(pnlRight);
@@ -467,7 +495,7 @@ public class FrmTaoDatCho extends JDialog {
 				}
 			} else {
 				JOptionPane.showMessageDialog(this,
-						"❌ Lỗi: Không thể lưu thông tin đặt chỗ / món đặt trước vào cơ sở dữ liệu!", "Lỗi CSDL",
+						"Lỗi: Không thể lưu thông tin đặt chỗ / món đặt trước vào cơ sở dữ liệu!", "Lỗi CSDL",
 						JOptionPane.ERROR_MESSAGE);
 			}
 		});

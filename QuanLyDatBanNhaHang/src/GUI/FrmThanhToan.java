@@ -228,16 +228,14 @@ public class FrmThanhToan extends JDialog {
 			return;
 		}
 
-		// Gọi hàm thanh toán từ DAO (Hàm này tự cập nhật Hóa Đơn và cập nhật luôn Bàn
-		// về Trống)
-		// Hiện tại giả định chietKhau = 0 và maKM = "NONE"
+
 		boolean ok = hoaDonDAO.thanhToan(maHDHienTai, tongTienBill, 0, "NONE");
 
 		if (ok) {
-			JOptionPane.showMessageDialog(this, "✅ Thanh toán thành công cho hóa đơn: " + maHDHienTai);
+			JOptionPane.showMessageDialog(this, "Thanh toán thành công cho hóa đơn: " + maHDHienTai);
 			this.dispose();
 		} else {
-			JOptionPane.showMessageDialog(this, "❌ Lỗi khi lưu vào Database!", "Thất bại", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, "Lỗi khi lưu vào Database!", "Thất bại", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 

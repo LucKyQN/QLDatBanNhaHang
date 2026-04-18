@@ -83,7 +83,7 @@ public class FrmThuNgan extends JFrame {
 		setSize(1440, 860);
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-
+		this.setExtendedState(JFrame.MAXIMIZED_BOTH);
 		JPanel root = new JPanel(new BorderLayout());
 		root.setBackground(BG_MAIN);
 		root.add(createTopBar(), BorderLayout.NORTH);

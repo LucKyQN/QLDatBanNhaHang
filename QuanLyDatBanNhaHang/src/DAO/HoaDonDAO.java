@@ -686,6 +686,7 @@ public class HoaDonDAO {
 			con = getConnection();
 			con.setAutoCommit(false);
 
+			// BƯỚC 1: Copy món từ Đơn đặt trước sang Hóa đơn
 			String sql = "INSERT INTO ChiTietHoaDon (maHD, maMonAn, soLuong, donGia, thanhTien, trangThaiPhucVu, ghiChu) "
 					+ "SELECT ?, ct.maMonAn, ct.soLuong, m.giaBan, (ct.soLuong * m.giaBan), N'Chưa lên', ct.ghiChu "
 					+ "FROM ChiTietDonDatMon ct " + "JOIN DonDatMon d ON ct.maDon = d.maDon "
@@ -697,6 +698,7 @@ public class HoaDonDAO {
 			int rows = ps.executeUpdate();
 			ps.close();
 
+			// BƯỚC 2: Cập nhật lại tổng tiền Hóa đơn
 			PreparedStatement psTong = con.prepareStatement(
 					"UPDATE HoaDon SET tongTien = (SELECT ISNULL(SUM(thanhTien), 0) FROM ChiTietHoaDon WHERE maHD = ?) WHERE maHD = ?");
 			psTong.setString(1, maHD);
@@ -704,9 +706,18 @@ public class HoaDonDAO {
 			psTong.executeUpdate();
 			psTong.close();
 
+			// BƯỚC 3 Đánh dấu Đơn đặt món đã được xử lý
+			String sqlUpdateDon = "UPDATE DonDatMon SET trangThai = N'Đã vào bàn' WHERE maBan = ? AND trangThai = N'Chờ khách'";
+			PreparedStatement psUpdateDon = con.prepareStatement(sqlUpdateDon);
+			psUpdateDon.setString(1, maBan);
+			psUpdateDon.executeUpdate();
+			psUpdateDon.close();
+
 			con.commit();
 			System.out.println(">>> So mon copy sang hoa don: " + rows);
-			return rows > 0;
+
+			// Trả về true vì thao tác thành công (kể cả khi rows = 0 do khách ko đặt món trước)
+			return true;
 		} catch (Exception e) {
 			try {
 				if (con != null)

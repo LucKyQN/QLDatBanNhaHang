@@ -66,7 +66,7 @@ public class FrmDashBoard extends JFrame {
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setResizable(true);
-
+		this.setExtendedState(JFrame.MAXIMIZED_BOTH);
 		JPanel root = new JPanel(new BorderLayout());
 		root.setBackground(BG_MAIN);
 
