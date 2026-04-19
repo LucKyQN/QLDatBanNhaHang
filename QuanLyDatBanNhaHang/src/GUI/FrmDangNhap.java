@@ -39,7 +39,7 @@ public class FrmDangNhap extends JFrame {
         setContentPane(mainPanel);
     }
 
-    // LEFT PANEL - ảnh nền
+
     private JPanel createLeftPanel() {
         BackgroundImagePanel leftPanel = new BackgroundImagePanel(BG_IMAGE_PATH);
         leftPanel.setLayout(new BorderLayout());
@@ -67,7 +67,7 @@ public class FrmDangNhap extends JFrame {
         return leftPanel;
     }
 
-    // RIGHT PANEL - form đăng nhập
+
     private JPanel createRightPanel() {
         JPanel rightPanel = new JPanel(new BorderLayout());
         rightPanel.setBackground(new Color(245, 245, 245));

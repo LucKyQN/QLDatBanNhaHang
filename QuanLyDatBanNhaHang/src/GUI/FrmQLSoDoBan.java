@@ -731,10 +731,14 @@ public class FrmQLSoDoBan extends JPanel {
         JLabel lbTitle = new JLabel("Trạng thái");
         lbTitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lbTitle.setForeground(TEXT_GRAY);
+        lbTitle.setAlignmentX(Component.LEFT_ALIGNMENT); // Ép sát lề trái
+
+        JPanel pnlBadge = createStatusBadge(trangThai);
+        pnlBadge.setAlignmentX(Component.LEFT_ALIGNMENT); // Ép sát lề trái
 
         statusItem.add(lbTitle);
-        statusItem.add(Box.createVerticalStrut(8));
-        statusItem.add(createStatusBadge(trangThai));
+        statusItem.add(Box.createVerticalStrut(4)); // Đổi thành 4px cho đều với 3 ô kia
+        statusItem.add(pnlBadge);
 
         infoSection.add(statusItem);
         return infoSection;
@@ -748,34 +752,36 @@ public class FrmQLSoDoBan extends JPanel {
         JLabel lb = new JLabel(label);
         lb.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lb.setForeground(TEXT_GRAY);
+        lb.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel val = new JLabel(value);
-        val.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        val.setFont(new Font("Segoe UI", Font.BOLD, 15));
         val.setForeground(TEXT_DARK);
+        val.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         p.add(lb);
-        p.add(Box.createVerticalStrut(8));
+        p.add(Box.createVerticalStrut(4));
         p.add(val);
 
         return p;
     }
 
     private JPanel createDetailRow(String label, String value) {
-        JPanel p = new JPanel();
+        JPanel p = new JPanel(new BorderLayout());
         p.setOpaque(false);
-        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+        p.setBorder(new EmptyBorder(4, 0, 4, 0));
 
         JLabel lb = new JLabel(label);
         lb.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lb.setForeground(TEXT_GRAY);
 
         JLabel val = new JLabel(value);
-        val.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        val.setFont(new Font("Segoe UI", Font.BOLD, 14));
         val.setForeground(TEXT_DARK);
+        val.setHorizontalAlignment(SwingConstants.RIGHT);
 
-        p.add(lb);
-        p.add(Box.createVerticalStrut(6));
-        p.add(val);
+        p.add(lb, BorderLayout.WEST);
+        p.add(val, BorderLayout.EAST);
         return p;
     }
 
@@ -791,50 +797,37 @@ public class FrmQLSoDoBan extends JPanel {
 
     private JPanel createMonItem(String tenMon, int soLuong, long giaTien, String trangThaiMon) {
         JPanel item = createSimpleCard();
-        item.setLayout(new BorderLayout(12, 0));
-        item.setBorder(new EmptyBorder(16, 16, 16, 16));
+        item.setLayout(new BorderLayout(0, 8)); // Khoảng cách dọc giữa 2 tầng
+        item.setBorder(new EmptyBorder(12, 16, 12, 16));
 
-        JPanel left = new JPanel();
-        left.setOpaque(false);
-        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+        // Tầng 1: Tên món (Trái) - Thành tiền (Phải)
+        JPanel top = new JPanel(new BorderLayout());
+        top.setOpaque(false);
 
         JLabel lbTen = new JLabel(tenMon != null ? tenMon : "");
-        lbTen.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lbTen.setFont(new Font("Segoe UI", Font.BOLD, 15));
         lbTen.setForeground(TEXT_DARK);
 
-        JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 6));
-        row2.setOpaque(false);
+        JLabel lbTien = new JLabel(formatTien(giaTien) + " đ");
+        lbTien.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        lbTien.setForeground(RED_MAIN);
 
-        JLabel lbQty = new JLabel("SL: " + soLuong);
+        top.add(lbTen, BorderLayout.WEST);
+        top.add(lbTien, BorderLayout.EAST);
+
+        // Tầng 2: Badge Trạng thái (Trái) - Số lượng (Phải)
+        JPanel bottom = new JPanel(new BorderLayout());
+        bottom.setOpaque(false);
+
+        JLabel lbQty = new JLabel("Số lượng: " + soLuong);
         lbQty.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lbQty.setForeground(TEXT_GRAY);
 
-        row2.add(lbQty);
+        bottom.add(createStatusBadge(trangThaiMon != null ? trangThaiMon : "Chưa lên"), BorderLayout.WEST);
+        bottom.add(lbQty, BorderLayout.EAST);
 
-        left.add(lbTen);
-        left.add(Box.createVerticalStrut(8));
-        left.add(createStatusBadge(trangThaiMon != null ? trangThaiMon : "Chưa lên"));
-
-        JPanel right = new JPanel();
-        right.setOpaque(false);
-        right.setLayout(new BoxLayout(right, BoxLayout.Y_AXIS));
-
-        JLabel lbTien = new JLabel(formatTien(giaTien) + " đ");
-        lbTien.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        lbTien.setForeground(RED_MAIN);
-        lbTien.setAlignmentX(Component.RIGHT_ALIGNMENT);
-
-        JLabel lbQty2 = new JLabel("SL: " + soLuong);
-        lbQty2.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        lbQty2.setForeground(TEXT_GRAY);
-        lbQty2.setAlignmentX(Component.RIGHT_ALIGNMENT);
-
-        right.add(lbQty2);
-        right.add(Box.createVerticalStrut(8));
-        right.add(lbTien);
-
-        item.add(left, BorderLayout.CENTER);
-        item.add(right, BorderLayout.EAST);
+        item.add(top, BorderLayout.NORTH);
+        item.add(bottom, BorderLayout.SOUTH);
 
         return item;
     }

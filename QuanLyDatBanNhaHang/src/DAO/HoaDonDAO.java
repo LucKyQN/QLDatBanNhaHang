@@ -24,13 +24,13 @@ public class HoaDonDAO {
 
 		String sql = "SELECT b.maBan, b.tenBan, b.sucChua, h.maHD, h.tenKhachLe, h.sdtKhachLe, h.ngayGioLap, "
 				+ "       h.maPhieuDatBan, "
-				+ "       (SELECT COALESCE(SUM(thanhTien), 0) FROM ChiTietHoaDon WHERE maHD = h.maHD) AS tamTinh, "
+				+ "       (SELECT COALESCE(SUM(thanhTien), 0) FROM ChiTietHoaDon WHERE maHD = h.maHD AND ISNULL(trangThaiPhucVu, '') <> N'Hủy') AS tamTinh, "
 				+ "       ISNULL(p.tienCoc, 0) AS tienCoc, " + "       ISNULL(p.tienMonDatTruoc, 0) AS tienMonDatTruoc "
 				+ "FROM BanAn b " + "INNER JOIN HoaDon h ON b.maBan = h.maBan "
 				+ "LEFT JOIN PhieuDatBan p ON h.maPhieuDatBan = p.maPhieu "
 				+ "WHERE h.trangThaiThanhToan IN (N'Chờ thanh toán') "
 				+ "AND b.trangThai IN (N'Chờ thanh toán') "
-				+ "AND (SELECT COALESCE(SUM(thanhTien), 0) FROM ChiTietHoaDon WHERE maHD = h.maHD) > 0";
+				+ "AND (SELECT COALESCE(SUM(thanhTien), 0) FROM ChiTietHoaDon WHERE maHD = h.maHD AND ISNULL(trangThaiPhucVu, '') <> N'Hủy') >= 0";
 
 		try {
 			Connection con = getConnection();
@@ -52,7 +52,6 @@ public class HoaDonDAO {
 				ban.tamTinh = (long) rs.getDouble("tamTinh");
 				list.add(ban);
 			}
-
 			rs.close();
 			ps.close();
 		} catch (SQLException e) {
@@ -66,7 +65,7 @@ public class HoaDonDAO {
 		List<MonAnModel> ds = new ArrayList<>();
 
 		String sql = "SELECT c.ID_CTHD, c.maMonAn, m.tenMonAn, c.soLuong, c.donGia, c.thanhTien, c.trangThaiPhucVu "
-				+ "FROM ChiTietHoaDon c " + "JOIN MonAn m ON c.maMonAn = m.maMonAn " + "WHERE c.maHD = ?";
+				+ "FROM ChiTietHoaDon c " + "JOIN MonAn m ON c.maMonAn = m.maMonAn " + "WHERE c.maHD = ? AND ISNULL(c.trangThaiPhucVu, '') <> N'Hủy'";
 
 		try {
 			Connection con = getConnection();
@@ -348,7 +347,8 @@ public class HoaDonDAO {
 	}
 
 	private double tinhTongTienChiTiet(Connection con, String maHD) throws SQLException {
-		String sql = "SELECT COALESCE(SUM(thanhTien), 0) AS tong FROM ChiTietHoaDon WHERE maHD = ?";
+		String sql = "SELECT COALESCE(SUM(thanhTien), 0) AS tong FROM ChiTietHoaDon "
+				+ "WHERE maHD = ? AND ISNULL(trangThaiPhucVu, '') <> N'Hủy'";
 		PreparedStatement ps = con.prepareStatement(sql);
 		ps.setString(1, maHD);
 		ResultSet rs = ps.executeQuery();
@@ -586,20 +586,43 @@ public class HoaDonDAO {
 	}
 
 	// Phục vụ đổi trạng thái món theo ID_CTHD
+
 	public boolean capNhatTrangThaiMon(int idCTHD, String trangThaiMoi) {
-		String sql = "UPDATE ChiTietHoaDon SET trangThaiPhucVu = ? WHERE ID_CTHD = ?";
+		Connection con = null;
 		try {
-			Connection con = getConnection();
+			con = getConnection();
+			con.setAutoCommit(false); // Bật Transaction an toàn
+
+			// Bước Đổi trạng thái món thành Hủy
+			String sql = "UPDATE ChiTietHoaDon SET trangThaiPhucVu = ? WHERE ID_CTHD = ?";
 			PreparedStatement ps = con.prepareStatement(sql);
 			ps.setString(1, trangThaiMoi);
 			ps.setInt(2, idCTHD);
-
 			boolean ok = ps.executeUpdate() > 0;
 			ps.close();
+
+			// Bước Cập nhật lại tổng tiền của Hóa Đơn đó (loại bỏ món Hủy)
+			if (ok) {
+				String sqlTong = "UPDATE HoaDon SET tongTien = ("
+						+ "SELECT ISNULL(SUM(thanhTien), 0) FROM ChiTietHoaDon "
+						+ "WHERE maHD = (SELECT maHD FROM ChiTietHoaDon WHERE ID_CTHD = ?) "
+						+ "AND ISNULL(trangThaiPhucVu, '') <> N'Hủy') "
+						+ "WHERE maHD = (SELECT maHD FROM ChiTietHoaDon WHERE ID_CTHD = ?)";
+				PreparedStatement psTong = con.prepareStatement(sqlTong);
+				psTong.setInt(1, idCTHD);
+				psTong.setInt(2, idCTHD);
+				psTong.executeUpdate();
+				psTong.close();
+			}
+
+			con.commit();
 			return ok;
 		} catch (Exception e) {
+			if (con != null) try { con.rollback(); } catch (Exception ex) {}
 			e.printStackTrace();
 			return false;
+		} finally {
+			if (con != null) try { con.setAutoCommit(true); } catch (Exception ex) {}
 		}
 	}
 

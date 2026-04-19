@@ -474,7 +474,30 @@ public class FrmPhucVu extends JFrame {
 				return this;
 			}
 		});
+		JTextField txtSearch = new JTextField();
+		txtSearch.setPreferredSize(new Dimension(0, 32));
+		txtSearch.setBorder(BorderFactory.createCompoundBorder(
+				BorderFactory.createLineBorder(new Color(200, 200, 200)),
+				new EmptyBorder(0, 8, 0, 8)
+		));
 
+		// Bắt sự kiện gõ phím đến đâu, lọc danh sách đến đó
+		txtSearch.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+			public void insertUpdate(javax.swing.event.DocumentEvent e) { filter(); }
+			public void removeUpdate(javax.swing.event.DocumentEvent e) { filter(); }
+			public void changedUpdate(javax.swing.event.DocumentEvent e) { filter(); }
+
+			private void filter() {
+				String keyword = txtSearch.getText().toLowerCase();
+				listModel.clear(); // Xóa danh sách hiện tại
+				for (MonAn mon : dsMon) {
+					// Nếu tên món chứa từ khóa tìm kiếm thì thêm lại vào list
+					if (mon.getTenMon().toLowerCase().contains(keyword)) {
+						listModel.addElement(mon);
+					}
+				}
+			}
+		});
 		DefaultTableModel modelTam = new DefaultTableModel(
 				new String[] { "Mã món", "Tên món", "SL", "Đơn giá", "Ghi chú" }, 0) {
 			@Override
@@ -533,8 +556,15 @@ public class FrmPhucVu extends JFrame {
 			}
 		});
 
+		// Bố cục lại panel bên trái để nhét ô tìm kiếm vào
+		JPanel pnlTopLeft = new JPanel(new BorderLayout(0, 5));
+		JLabel lblTitleSearch = new JLabel("🔍 Tìm món nhanh:");
+		lblTitleSearch.setFont(new Font("Segoe UI", Font.BOLD, 12));
+		pnlTopLeft.add(lblTitleSearch, BorderLayout.NORTH);
+		pnlTopLeft.add(txtSearch, BorderLayout.CENTER);
+
 		JPanel left = new JPanel(new BorderLayout(0, 8));
-		left.add(new JLabel("Danh sách món"), BorderLayout.NORTH);
+		left.add(pnlTopLeft, BorderLayout.NORTH);
 		left.add(new JScrollPane(listMon), BorderLayout.CENTER);
 
 		JPanel addBox = new JPanel(new GridLayout(0, 1, 6, 6));
