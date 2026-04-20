@@ -357,7 +357,7 @@ public class FrmPhucVu extends JFrame {
 				if (success) {
 					SwingUtilities.invokeLater(checkNutThanhToan);
 				} else {
-					System.err.println("❌ SQL: Cập nhật trạng thái thất bại!");
+					System.err.println("SQL: Cập nhật trạng thái thất bại!");
 				}
 			}
 		});
@@ -491,7 +491,7 @@ public class FrmPhucVu extends JFrame {
 				String keyword = txtSearch.getText().toLowerCase();
 				listModel.clear(); // Xóa danh sách hiện tại
 				for (MonAn mon : dsMon) {
-					// Nếu tên món chứa từ khóa tìm kiếm thì thêm lại vào list
+
 					if (mon.getTenMon().toLowerCase().contains(keyword)) {
 						listModel.addElement(mon);
 					}
@@ -558,7 +558,7 @@ public class FrmPhucVu extends JFrame {
 
 		// Bố cục lại panel bên trái để nhét ô tìm kiếm vào
 		JPanel pnlTopLeft = new JPanel(new BorderLayout(0, 5));
-		JLabel lblTitleSearch = new JLabel("🔍 Tìm món nhanh:");
+		JLabel lblTitleSearch = new JLabel("Tìm món nhanh:");
 		lblTitleSearch.setFont(new Font("Segoe UI", Font.BOLD, 12));
 		pnlTopLeft.add(lblTitleSearch, BorderLayout.NORTH);
 		pnlTopLeft.add(txtSearch, BorderLayout.CENTER);

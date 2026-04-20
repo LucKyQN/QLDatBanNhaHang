@@ -155,7 +155,7 @@ public class FrmThuNgan extends JFrame {
 
 		// --- BÊN PHẢI: USER, CÀI ĐẶT & ĐĂNG XUẤT ---
 		JLabel lbUser = new JLabel(
-				"👤 " + tenNhanVien + " | " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+				"" + tenNhanVien + " | " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
 		lbUser.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 		lbUser.setForeground(TEXT_DARK);
 

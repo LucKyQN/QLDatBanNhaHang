@@ -97,7 +97,7 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 		cboPeriod.setFont(new Font("Segoe UI", Font.PLAIN, 13));
 		cboPeriod.addActionListener(e -> loadData());
 
-		JButton btnXuat = new JButton("⬇ Xuất báo cáo");
+		JButton btnXuat = new JButton("Xuất báo cáo");
 		btnXuat.setBackground(RED_MAIN);
 		btnXuat.setForeground(Color.WHITE);
 		btnXuat.setFont(new Font("Segoe UI", Font.BOLD, 13));

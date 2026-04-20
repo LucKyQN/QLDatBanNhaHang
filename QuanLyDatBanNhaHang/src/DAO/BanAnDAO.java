@@ -140,7 +140,7 @@ public class BanAnDAO {
 		Connection con = null;
 		try {
 			con = getConnection();
-			// Tắt auto commit để gộp 2 lệnh SQL thành 1 khối an toàn
+			
 			con.setAutoCommit(false);
 
 			// 1. Đặt bàn cũ (Bàn chuyển đi / Bàn bị gộp) thành "Trống"

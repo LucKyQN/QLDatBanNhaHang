@@ -163,6 +163,20 @@ public class FrmQLNhanVien extends JPanel {
 			return;
 		}
 
+		if (Entity.LuuLog.nhanVienDangNhap != null && nv.getMaNV().equals(Entity.LuuLog.nhanVienDangNhap.getMaNV())) {
+			JOptionPane.showMessageDialog(this,
+					"Bạn không thể tự xóa tài khoản của chính mình!",
+					"Cảnh báo", JOptionPane.WARNING_MESSAGE);
+			return;
+		}
+
+		if ("Quản lý".equalsIgnoreCase(nv.getVaiTro())) {
+			JOptionPane.showMessageDialog(this,
+					"Bạn không có quyền xóa tài khoản của Quản lý khác",
+					"Từ chối quyền", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
 		int confirm = JOptionPane.showConfirmDialog(this,
 				"Xác nhận xóa mềm nhân viên " + nv.getMaNV() + " - " + nv.getHoTenNV() + "?", "Xóa mềm nhân viên",
 				JOptionPane.YES_NO_OPTION);

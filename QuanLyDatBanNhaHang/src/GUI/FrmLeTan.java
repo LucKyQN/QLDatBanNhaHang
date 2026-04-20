@@ -95,7 +95,7 @@ public class FrmLeTan extends JFrame {
 	}
 
 	// TOP BAR & TABS
-	// ==========================================
+
 	private JPanel createTopBar() {
 		JPanel bar = new JPanel(new BorderLayout());
 		bar.setBackground(Color.WHITE);
@@ -128,7 +128,7 @@ public class FrmLeTan extends JFrame {
 		String tenNV = (Entity.LuuLog.nhanVienDangNhap != null)
 				? Entity.LuuLog.nhanVienDangNhap.getTenNV()
 				: "Lễ tân";
-		JLabel lblUser = new JLabel("👤 " + tenNV);
+		JLabel lblUser = new JLabel("" + tenNV);
 		lblUser.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 
 		JButton btnCaiDat = new JButton("Cài đặt");
@@ -167,7 +167,7 @@ public class FrmLeTan extends JFrame {
 	}
 
 	private void startClock() {
-		new Timer(1000, e -> lblClock.setText("🕒 " + new SimpleDateFormat("HH:mm:ss").format(new Date()))).start();
+		new Timer(1000, e -> lblClock.setText("" + new SimpleDateFormat("HH:mm:ss").format(new Date()))).start();
 	}
 
 	private JPanel createTabs() {
@@ -388,9 +388,9 @@ public class FrmLeTan extends JFrame {
 			String sdt = dlg.getSDT();
 			int soNguoi = dlg.getSoNguoi();
 
-			// ==========================================================
+
 			// LOGIC KIỂM TRA SỨC CHỨA BÀN KHI TẠO MỚI (MỞ BÀN TRỰC TIẾP)
-			// ==========================================================
+
 			if (soNguoi > capacity) {
 				String msgCanhBao = "Bàn " + tenBan + " chỉ có sức chứa " + capacity + " người.\n" + "Số lượng "
 						+ soNguoi + " khách đã vượt quá mức quy định.\n\n"
@@ -403,7 +403,7 @@ public class FrmLeTan extends JFrame {
 					return; // Lễ tân chọn NO -> Hủy mở bàn
 				}
 			}
-			// ==========================================================
+
 
 			String maHD = "HD" + System.currentTimeMillis();
 			String maNV = "NV005";
@@ -443,7 +443,7 @@ public class FrmLeTan extends JFrame {
 		JTextField txtSearch = new JTextField();
 		txtSearch.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
 		txtSearch.setPreferredSize(new Dimension(0, 35));
-		txtSearch.setText("🔍 Tìm khách hàng / SĐT");
+		txtSearch.setText("Tìm khách hàng / SĐT");
 		txtSearch.setForeground(TEXT_GRAY);
 		txtSearch.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER_CLR, 1, true),
 				new EmptyBorder(0, 10, 0, 10)));
@@ -473,19 +473,19 @@ public class FrmLeTan extends JFrame {
 		lblQuick.setFont(new Font("Segoe UI", Font.BOLD, 14));
 		actions.add(lblQuick);
 
-		JButton btnTaoDatCho = createSolidButton("+ Tạo đặt chỗ mới", RED_MAIN, Color.WHITE);
+		JButton btnTaoDatCho = createSolidButton("Tạo đặt chỗ mới", RED_MAIN, Color.WHITE);
 		btnTaoDatCho.addActionListener(e -> {
 			new FrmTaoDatCho(this).setVisible(true);
 		});
 		actions.add(btnTaoDatCho);
 
-		JButton btnChuyenBan = createOutlineButton("⇆ Chuyển bàn");
+		JButton btnChuyenBan = createOutlineButton("Chuyển bàn");
 		btnChuyenBan.addActionListener(e -> {
 			new FrmChuyenBan(this).setVisible(true);
 		});
 		actions.add(btnChuyenBan);
 
-		JButton btnGopBan = createOutlineButton("⛙ Gộp bàn");
+		JButton btnGopBan = createOutlineButton("Gộp bàn");
 		btnGopBan.addActionListener(e -> {
 			new FrmGopBan(this).setVisible(true);
 		});
@@ -587,9 +587,7 @@ public class FrmLeTan extends JFrame {
 			}
 		}
 
-		// ==========================================================
 		// LOGIC KIỂM TRA SỨC CHỨA KHI CHECK-IN KHÁCH ĐẶT TRƯỚC
-		// ==========================================================
 		int capacity = 0;
 		List<BanAn> allBan = banAnDAO.getAllBanAn();
 		for (BanAn ban : allBan) {
@@ -619,7 +617,7 @@ public class FrmLeTan extends JFrame {
 			if (check != JOptionPane.YES_OPTION)
 				return;
 		}
-		// ==========================================================
+
 
 		String maHD = "HD" + System.currentTimeMillis();
 		String maNV = (LuuLog.nhanVienDangNhap != null) ? LuuLog.nhanVienDangNhap.getMaNV() : "NV001";
@@ -634,7 +632,7 @@ public class FrmLeTan extends JFrame {
 		boolean phieuOk = phieuDAO.capNhatTrangThaiPhieu(maPhieu, "Đã đến");
 
 		if (hdOk && copyMonOk && banOk && phieuOk) {
-			JOptionPane.showMessageDialog(cardRef, "✅ Check-in thành công cho " + tenKhach + "!\nMã HĐ: " + maHD,
+			JOptionPane.showMessageDialog(cardRef, "Check-in thành công cho " + tenKhach + "!\nMã HĐ: " + maHD,
 					"Thành công", JOptionPane.INFORMATION_MESSAGE);
 			refreshSoDoBan();
 			loadDanhSachDatCho();
@@ -714,8 +712,7 @@ public class FrmLeTan extends JFrame {
 
 				// 3. Logic Lọc
 				if (requiredCap > 0) {
-					// Ẩn bàn nếu bàn không TRỐNG hoặc sức chứa nhỏ hơn yêu cầu
-					// (Bàn Đang ghép cũng sẽ bị ẩn vì nó không phải "Trống")
+
 					if (!ban.getTrangThai().trim().equalsIgnoreCase("Trống") || ban.getSucChua() < requiredCap) {
 						showTable = false;
 					}
