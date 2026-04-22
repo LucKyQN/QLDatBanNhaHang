@@ -20,6 +20,7 @@ import java.util.Date;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableModel;
 
 import Entity.PhieuDatBan;
 import Entity.DlgNhapThongTinKhach;
@@ -65,7 +66,9 @@ public class FrmLeTan extends JFrame {
 	private final DAO.BanAnDAO banAnDAO = new DAO.BanAnDAO();
 	private final DAO.HoaDonDAO hoaDonDAO = new DAO.HoaDonDAO();
 	private final DAO.PhieuDatBanDAO phieuDAO = new DAO.PhieuDatBanDAO();
-
+	private JTextField txtTimKiemDatCho;
+	private JComboBox<String> cboLocThoiGian;
+	private DefaultTableModel modelDatCho;
 	public FrmLeTan() {
 		initUI();
 		startClock();
@@ -358,8 +361,7 @@ public class FrmLeTan extends JFrame {
 				} else if (status.equalsIgnoreCase("Có khách")) {
 					hienThiThongTinBan(maBan, tenBan);
 				} else if (status.equalsIgnoreCase("Đã đặt")) {
-					JOptionPane.showMessageDialog(FrmLeTan.this,
-							"Bàn này đã được ĐẶT TRƯỚC.\nHãy Check-in cho khách ở danh sách bên phải.");
+					xuLyClickBanDaDat(maBan, tenBan, capacity);
 				} else if (status.equalsIgnoreCase("Đang ghép")) {
 					// Xử lý khi click vào Bàn Đang Ghép (Cam)
 					String msg = "Bàn này đang được ghép chung hóa đơn với bàn khác.\n"
@@ -377,7 +379,63 @@ public class FrmLeTan extends JFrame {
 		});
 		return card;
 	}
+	// HÀM XỬ LÝ THÔNG MINH: TÍNH TOÁN THỜI GIAN AN TOÀN CHO BÀN "ĐÃ ĐẶT"
+	private void xuLyClickBanDaDat(String maBan, String tenBan, int capacity) {
+		List<PhieuDatBan> dsPhieu = phieuDAO.getDanhSachDatChoChuaCheckIn();
+		PhieuDatBan phieuCuaBanNay = null;
+		SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd");
+		String today = sdfDate.format(new Date());
 
+		// Tìm phiếu đặt của bàn này TRONG HÔM NAY
+		for (PhieuDatBan p : dsPhieu) {
+			if (p.getMaBan() != null && p.getMaBan().equals(maBan) && p.getThoiGianDen() != null) {
+				if (sdfDate.format(p.getThoiGianDen()).equals(today)) {
+					phieuCuaBanNay = p;
+					break;
+				}
+			}
+		}
+
+		if (phieuCuaBanNay != null) {
+			long gioDat = phieuCuaBanNay.getThoiGianDen().getTime();
+			long hienTai = System.currentTimeMillis();
+
+			long thoiGianConLai_Phut = (gioDat - hienTai) / (60 * 1000);
+
+			if (thoiGianConLai_Phut >= 150) {
+				SimpleDateFormat sdfTime = new SimpleDateFormat("HH:mm");
+				String thoiGianDatStr = sdfTime.format(phieuCuaBanNay.getThoiGianDen());
+
+				long tieng = thoiGianConLai_Phut / 60;
+				long phut = thoiGianConLai_Phut % 60;
+
+				String msg = "Bàn " + tenBan + " có khách đặt trước lúc " + thoiGianDatStr + ".\n"
+						+ "Hiện tại còn trống " + tieng + " tiếng " + phut + " phút nữa khách mới đến.\n"
+						+ "ĐỦ THỜI GIAN AN TOÀN (>= 2.5 tiếng) để đón khách vãng lai.\n\n"
+						+ "Bạn có muốn mở bàn này cho khách vãng lai ngồi tạm không?";
+
+				int choice = JOptionPane.showConfirmDialog(this, msg, "Mở bàn an toàn", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+				if (choice == JOptionPane.YES_OPTION) {
+					xuLyMoBan(maBan, tenBan, capacity);
+				}
+			} else {
+				SimpleDateFormat sdfTime = new SimpleDateFormat("HH:mm");
+				String thoiGianDatStr = sdfTime.format(phieuCuaBanNay.getThoiGianDen());
+				JOptionPane.showMessageDialog(this,
+						"Bàn " + tenBan + " có khách đặt lúc " + thoiGianDatStr + ".\n"
+								+ "Chỉ còn " + thoiGianConLai_Phut + " phút nữa khách sẽ đến.\n"
+								+ "KHÔNG ĐỦ thời gian an toàn để nhận thêm khách vãng lai!",
+						"Từ chối mở bàn", JOptionPane.WARNING_MESSAGE);
+			}
+		} else {
+			// Trường hợp khách đặt cho ngày mai, thì hôm nay bàn đó Lễ tân vẫn xài vô tư
+			String msg = "Bàn " + tenBan + " được đặt cho ngày khác, không phải hôm nay.\nHôm nay vẫn có thể sử dụng bình thường.\nBạn có muốn mở bàn không?";
+			int choice = JOptionPane.showConfirmDialog(this, msg, "Mở bàn", JOptionPane.YES_NO_OPTION);
+			if(choice == JOptionPane.YES_OPTION) {
+				xuLyMoBan(maBan, tenBan, capacity);
+			}
+		}
+	}
 	// Cập nhật hàm xuLyMoBan nhận thêm tham số tenBan và capacity
 	private void xuLyMoBan(String maBan, String tenBan, int capacity) {
 		DlgNhapThongTinKhach dlg = new DlgNhapThongTinKhach(FrmLeTan.this);
@@ -425,43 +483,65 @@ public class FrmLeTan extends JFrame {
 	}
 
 	// RIGHT SIDEBAR
+	// RIGHT SIDEBAR
 	private JPanel createRightSidebar() {
 		JPanel sidebar = new JPanel(new BorderLayout());
 		sidebar.setBackground(Color.WHITE);
-		sidebar.setPreferredSize(new Dimension(320, 0));
+		sidebar.setPreferredSize(new Dimension(340, 0)); // Tăng chút xíu để chứa Combobox cho thoải mái
 		sidebar.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, BORDER_CLR));
 
 		JPanel top = new JPanel();
 		top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
 		top.setBackground(Color.WHITE);
-		top.setBorder(new EmptyBorder(20, 20, 20, 20));
+		top.setBorder(new EmptyBorder(20, 20, 10, 20));
 
 		JLabel title = new JLabel("Quản lý Đặt chỗ");
 		title.setFont(new Font("Segoe UI", Font.BOLD, 16));
 		title.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-		JTextField txtSearch = new JTextField();
-		txtSearch.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
-		txtSearch.setPreferredSize(new Dimension(0, 35));
-		txtSearch.setText("Tìm khách hàng / SĐT");
-		txtSearch.setForeground(TEXT_GRAY);
-		txtSearch.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER_CLR, 1, true),
+		// --- Ô TÌM KIẾM ---
+		txtTimKiemDatCho = new JTextField();
+		txtTimKiemDatCho.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
+		txtTimKiemDatCho.setPreferredSize(new Dimension(0, 35));
+		// Nếu bạn không có lớp PlaceholderTextField thì dùng setToolTipText hoặc Label
+		txtTimKiemDatCho.setToolTipText("Gõ SĐT hoặc Tên khách...");
+		txtTimKiemDatCho.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER_CLR, 1, true),
 				new EmptyBorder(0, 10, 0, 10)));
 
-		JLabel subTitle = new JLabel("Đặt chỗ hôm nay");
+		// Bắt sự kiện gõ tới đâu tìm tới đó
+		txtTimKiemDatCho.addKeyListener(new java.awt.event.KeyAdapter() {
+			public void keyReleased(java.awt.event.KeyEvent evt) {
+				loadDanhSachDatCho();
+			}
+		});
+
+		// --- COMBOBOX LỌC NGÀY ---
+		JPanel pnlFilter = new JPanel(new BorderLayout(10, 0));
+		pnlFilter.setOpaque(false);
+		pnlFilter.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
+
+		JLabel subTitle = new JLabel("Hiển thị: ");
 		subTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
-		subTitle.setBorder(new EmptyBorder(20, 0, 10, 0));
-		subTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+		cboLocThoiGian = new JComboBox<>(new String[]{"Hôm nay", "Ngày mai", "Tất cả"});
+		cboLocThoiGian.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		cboLocThoiGian.setBackground(Color.WHITE);
+		cboLocThoiGian.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		cboLocThoiGian.addActionListener(e -> loadDanhSachDatCho());
+
+		pnlFilter.add(subTitle, BorderLayout.WEST);
+		pnlFilter.add(cboLocThoiGian, BorderLayout.CENTER);
 
 		top.add(title);
 		top.add(Box.createVerticalStrut(15));
-		top.add(txtSearch);
-		top.add(subTitle);
+		top.add(txtTimKiemDatCho);
+		top.add(Box.createVerticalStrut(15));
+		top.add(pnlFilter);
 
 		pnlDanhSachDatCho = new JPanel();
 		pnlDanhSachDatCho.setLayout(new BoxLayout(pnlDanhSachDatCho, BoxLayout.Y_AXIS));
 		pnlDanhSachDatCho.setBackground(Color.WHITE);
-		pnlDanhSachDatCho.setBorder(new EmptyBorder(0, 20, 0, 20));
+		pnlDanhSachDatCho.setBorder(new EmptyBorder(10, 20, 0, 20));
 
 		JScrollPane scroll = new JScrollPane(pnlDanhSachDatCho);
 		scroll.setBorder(null);
@@ -497,26 +577,71 @@ public class FrmLeTan extends JFrame {
 		return sidebar;
 	}
 
+	// Hàm load dữ liệu Đã được nâng cấp để ăn theo Từ khóa và Thời gian
 	public void loadDanhSachDatCho() {
 		if (pnlDanhSachDatCho == null)
 			return;
 		pnlDanhSachDatCho.removeAll();
 
-		List<PhieuDatBan> danhSachPhieu = phieuDAO.getDanhSachDatChoChuaCheckIn();
-		SimpleDateFormat sdfTime = new SimpleDateFormat("HH:mm");
+		// Lấy dữ liệu lọc
+		String tuKhoa = (txtTimKiemDatCho != null) ? txtTimKiemDatCho.getText().trim() : "";
+		String thoiGianLoc = (cboLocThoiGian != null && cboLocThoiGian.getSelectedItem() != null)
+				? cboLocThoiGian.getSelectedItem().toString()
+				: "Hôm nay";
 
-		if (danhSachPhieu.isEmpty()) {
-			JLabel emptyLabel = new JLabel("Không có khách đặt trước.");
+		// Tạm thời gọi hàm getDanhSachDatChoChuaCheckIn() cũ của bạn,
+		// Sau đó mình sẽ dùng Java Code để tự lọc luôn cho nhanh gọn khỏi đụng DAO!
+		List<PhieuDatBan> danhSachPhieuToanBo = phieuDAO.getDanhSachDatChoChuaCheckIn();
+		SimpleDateFormat sdfTime = new SimpleDateFormat("HH:mm");
+		SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd");
+
+		String todayDate = sdfDate.format(new Date());
+		String tomorrowDate = sdfDate.format(new Date(System.currentTimeMillis() + 86400000L)); // +1 ngày
+
+		int count = 0;
+
+		for (PhieuDatBan phieu : danhSachPhieuToanBo) {
+			// 1. LỌC TỪ KHÓA
+			boolean matchesSearch = true;
+			if (!tuKhoa.isEmpty()) {
+				matchesSearch = (phieu.getTenKhachHang() != null && phieu.getTenKhachHang().toLowerCase().contains(tuKhoa.toLowerCase())) ||
+						(phieu.getSoDienThoai() != null && phieu.getSoDienThoai().contains(tuKhoa));
+			}
+
+			// 2. LỌC THỜI GIAN
+			boolean matchesTime = true;
+			if (phieu.getThoiGianDen() != null) {
+				String phieuDate = sdfDate.format(phieu.getThoiGianDen());
+				if ("Hôm nay".equals(thoiGianLoc) && !phieuDate.equals(todayDate)) {
+					matchesTime = false;
+				} else if ("Ngày mai".equals(thoiGianLoc) && !phieuDate.equals(tomorrowDate)) {
+					matchesTime = false;
+				}
+			}
+
+			// Nếu thỏa cả 2 điều kiện thì vẽ ra Card
+			if (matchesSearch && matchesTime) {
+				String timeStr = (phieu.getThoiGianDen() != null) ? sdfTime.format(phieu.getThoiGianDen()) : "--:--";
+				pnlDanhSachDatCho.add(createBookingCard(
+						phieu.getMaPhieu(),
+						phieu.getTenKhachHang(),
+						phieu.getSoDienThoai(),
+						timeStr,
+						phieu.getMaBan(),
+						phieu.getTenBan(),
+						phieu.getSoLuongKhach()
+				));
+				pnlDanhSachDatCho.add(Box.createVerticalStrut(15));
+				count++;
+			}
+		}
+
+		if (count == 0) {
+			JLabel emptyLabel = new JLabel("Không tìm thấy kết quả phù hợp.");
 			emptyLabel.setFont(new Font("Segoe UI", Font.ITALIC, 13));
 			emptyLabel.setForeground(TEXT_GRAY);
+			emptyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 			pnlDanhSachDatCho.add(emptyLabel);
-		} else {
-			for (PhieuDatBan phieu : danhSachPhieu) {
-				String timeStr = sdfTime.format(phieu.getThoiGianDen());
-				pnlDanhSachDatCho.add(createBookingCard(phieu.getMaPhieu(), phieu.getTenKhachHang(),
-						phieu.getSoDienThoai(), timeStr, phieu.getMaBan(), phieu.getTenBan(), phieu.getSoLuongKhach()));
-				pnlDanhSachDatCho.add(Box.createVerticalStrut(15));
-			}
 		}
 
 		pnlDanhSachDatCho.revalidate();

@@ -1,9 +1,16 @@
 package GUI;
 
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
 
 import DAO.BanAnDAO;
@@ -13,606 +20,798 @@ import DAO.PhieuDatBanDAO;
 import Entity.BanAn;
 import Entity.MonAn;
 import Entity.PhieuDatBan;
+import connectDatabase.ConnectDB;
 
 public class FrmTaoDatCho extends JDialog {
 
-	private static final Color RED_MAIN = new Color(220, 38, 38);
-	private static final Color BORDER_CLR = new Color(230, 230, 230);
-	private static final Color TEXT_GRAY = new Color(120, 120, 120);
-
-	private static final int PHI_DAT_BAN_CO_DINH = 250000;
-
-	private DefaultTableModel tbModelDaChon;
-	private JLabel lblTongTien;
-	private JLabel lblPhiDatBan;
-	private JLabel lblCocMon;
-	private JLabel lblTongTienCoc;
-
-	private int tongTien = 0;
-
-	private JComboBox<ComboItem> cbBan;
-
-	private JTextField txtTenKhach;
-	private JTextField txtSDT;
-	private JTextField txtSoLuong;
-	private JTextField txtThoiGian;
-	private JTextArea txtNote;
-
-	public FrmTaoDatCho(JFrame parent) {
-		super(parent, true);
-		setUndecorated(true);
-		setSize(1000, 780);
-		setLocationRelativeTo(parent);
-
-		JPanel root = new JPanel(new BorderLayout());
-		root.setBackground(Color.WHITE);
-		root.setBorder(BorderFactory.createLineBorder(BORDER_CLR, 1));
-
-		root.add(createHeader(), BorderLayout.NORTH);
-		root.add(createBody(), BorderLayout.CENTER);
-		root.add(createFooter(), BorderLayout.SOUTH);
-
-		setContentPane(root);
-	}
-
-	private JPanel createHeader() {
-		JPanel header = new JPanel(new BorderLayout());
-		header.setBackground(Color.WHITE);
-		header.setBorder(new EmptyBorder(20, 30, 20, 30));
-
-		JLabel title = new JLabel("Tạo đặt chỗ mới");
-		title.setFont(new Font("Segoe UI", Font.BOLD, 22));
-
-		JButton btnClose = new JButton("✕");
-		btnClose.setFont(new Font("Segoe UI", Font.BOLD, 18));
-		btnClose.setContentAreaFilled(false);
-		btnClose.setBorderPainted(false);
-		btnClose.setCursor(new Cursor(Cursor.HAND_CURSOR));
-		btnClose.addActionListener(e -> dispose());
-
-		header.add(title, BorderLayout.WEST);
-		header.add(btnClose, BorderLayout.EAST);
-
-		JPanel bottomLine = new JPanel(new BorderLayout());
-		bottomLine.add(header, BorderLayout.CENTER);
-		bottomLine.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_CLR));
-
-		return bottomLine;
-	}
-
-	private JPanel createBody() {
-		JPanel body = new JPanel(new GridLayout(1, 2, 40, 0));
-		body.setBackground(Color.WHITE);
-		body.setBorder(new EmptyBorder(20, 30, 20, 30));
-
-		JPanel pnlLeft = new JPanel();
-		pnlLeft.setLayout(new BoxLayout(pnlLeft, BoxLayout.Y_AXIS));
-		pnlLeft.setBackground(Color.WHITE);
-
-		JLabel lblInfoTitle = new JLabel("Thông tin khách hàng");
-		lblInfoTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
-		pnlLeft.add(lblInfoTitle);
-		pnlLeft.add(Box.createVerticalStrut(15));
-
-		txtTenKhach = new JTextField();
-		txtSDT = new JTextField();
-		pnlLeft.add(createInputGroup("Tên khách hàng *", txtTenKhach));
-		pnlLeft.add(Box.createVerticalStrut(15));
-		pnlLeft.add(createInputGroup("Số điện thoại *", txtSDT));
-		pnlLeft.add(Box.createVerticalStrut(15));
-
-		JPanel rowTime = new JPanel(new GridLayout(1, 2, 15, 0));
-		rowTime.setBackground(Color.WHITE);
-
-		txtSoLuong = new JTextField("2");
-		txtThoiGian = new JTextField("--:-- --");
-		rowTime.add(createInputGroup("Số lượng khách *", txtSoLuong));
-		rowTime.add(createInputGroup("Thời gian *", txtThoiGian));
-		rowTime.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-		pnlLeft.add(rowTime);
-		pnlLeft.add(Box.createVerticalStrut(15));
-
-		BanAnDAO dao = new BanAnDAO();
-		List<BanAn> dsBan = dao.getAllBanAn();
-
-		cbBan = new JComboBox<>();
-		cbBan.addItem(new ComboItem("", "Chọn bàn"));
-
-		for (BanAn ban : dsBan) {
-			if (ban.getTrangThai() != null && ban.getTrangThai().trim().equalsIgnoreCase("Trống")) {
-				cbBan.addItem(new ComboItem(ban.getMaBan(), ban.getMaBan() + " - " + ban.getTenBan()));
-			}
-		}
-
-		pnlLeft.add(createInputGroup("Chọn bàn ", cbBan));
-		pnlLeft.add(Box.createVerticalStrut(15));
-
-		txtNote = new JTextArea();
-		txtNote.setLineWrap(true);
-		txtNote.setWrapStyleWord(true);
-		txtNote.setBorder(BorderFactory.createLineBorder(BORDER_CLR));
-		JScrollPane scrollNote = new JScrollPane(txtNote);
-		scrollNote.setPreferredSize(new Dimension(0, 80));
-		pnlLeft.add(createInputGroup("Ghi chú", scrollNote));
-
-		// Đổi sang BorderLayout để linh hoạt ép tỷ lệ
-		JPanel pnlRight = new JPanel(new BorderLayout(0, 15));
-		pnlRight.setBackground(Color.WHITE);
-
-		JPanel pnlMenu = new JPanel(new BorderLayout(0, 5));
-		pnlMenu.setPreferredSize(new Dimension(0, 190));
-		pnlMenu.setBackground(Color.WHITE);
-		JLabel lblMenuTitle = new JLabel("Thực đơn (Tùy chọn)");
-		lblMenuTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
-		pnlMenu.add(lblMenuTitle, BorderLayout.NORTH);
-
-		JPanel listFood = new JPanel();
-		listFood.setLayout(new BoxLayout(listFood, BoxLayout.Y_AXIS));
-		listFood.setBackground(Color.WHITE);
-
-		MonAnDAO monAnDAO = new MonAnDAO();
-		List<MonAn> dsMon = monAnDAO.getAllMonAn();
-
-		for (MonAn mon : dsMon) {
-			if (!mon.isTinhTrang()) {
-				continue;
-			}
-
-			String ten = mon.getTenMon();
-			int gia = (int) mon.getGiaMon();
-			String icon = getIconByName(ten);
-
-			listFood.add(createFoodItem(mon.getMaMonAn(), icon, ten, gia, "Món ăn"));
-			listFood.add(Box.createVerticalStrut(10));
-		}
-
-		JScrollPane scrollFood = new JScrollPane(listFood);
-		scrollFood.setBorder(BorderFactory.createLineBorder(BORDER_CLR));
-		scrollFood.getVerticalScrollBar().setUnitIncrement(16);
-		pnlMenu.add(scrollFood, BorderLayout.CENTER);
-
-		JPanel pnlCart = new JPanel(new BorderLayout(0, 8));
-		pnlCart.setBackground(Color.WHITE);
-
-		JLabel lblCartTitle = new JLabel("Món đã chọn");
-		lblCartTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
-		pnlCart.add(lblCartTitle, BorderLayout.NORTH);
-
-		String[] columns = { "Mã món", "Tên món", "SL", "Đơn giá" };
-		tbModelDaChon = new DefaultTableModel(columns, 0) {
-			@Override
-			public boolean isCellEditable(int row, int column) {
-				return false;
-			}
-		};
-
-		JTable tbDaChon = new JTable(tbModelDaChon);
-		tbDaChon.setRowHeight(25);
-
-		tbDaChon.setToolTipText("Nhấp đúp chuột vào món để GIẢM số lượng hoặc XÓA");
-		tbDaChon.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseClicked(java.awt.event.MouseEvent e) {
-				if (e.getClickCount() == 2) { // Bắt sự kiện nhấp đúp
-					int row = tbDaChon.getSelectedRow();
-					if (row != -1) {
-						int slCu = Integer.parseInt(tbModelDaChon.getValueAt(row, 2).toString());
-						long donGia = Long.parseLong(tbModelDaChon.getValueAt(row, 3).toString());
-
-						// Trừ tổng tiền
-						tongTien -= donGia;
-
-						if (slCu > 1) {
-							tbModelDaChon.setValueAt(slCu - 1, row, 2);
-						} else {
-							tbModelDaChon.removeRow(row);
-						}
-
-						capNhatTienCoc();
-					}
-				}
-			}
-		});
-		tbDaChon.getColumnModel().getColumn(0).setMinWidth(0);
-		tbDaChon.getColumnModel().getColumn(0).setMaxWidth(0);
-		tbDaChon.getColumnModel().getColumn(0).setWidth(0);
-
-		tbDaChon.getColumnModel().getColumn(1).setPreferredWidth(180);
-		tbDaChon.getColumnModel().getColumn(2).setPreferredWidth(40);
-		tbDaChon.getColumnModel().getColumn(3).setPreferredWidth(100);
-
-		JScrollPane scrollCart = new JScrollPane(tbDaChon);
-		scrollCart.setBorder(BorderFactory.createLineBorder(BORDER_CLR));
-		scrollCart.setPreferredSize(new Dimension(0, 150));
-		pnlCart.add(scrollCart, BorderLayout.CENTER);
-
-		JPanel pnlBottomRight = new JPanel();
-		pnlBottomRight.setLayout(new BoxLayout(pnlBottomRight, BoxLayout.Y_AXIS));
-		pnlBottomRight.setBackground(Color.WHITE);
-
-		lblTongTien = new JLabel("Tổng cộng: 0 đ");
-		lblTongTien.setFont(new Font("Segoe UI", Font.BOLD, 16));
-		lblTongTien.setForeground(RED_MAIN);
-		lblTongTien.setHorizontalAlignment(SwingConstants.RIGHT);
-		lblTongTien.setAlignmentX(Component.RIGHT_ALIGNMENT);
-
-		pnlBottomRight.add(Box.createVerticalStrut(8));
-		pnlBottomRight.add(lblTongTien);
-		pnlBottomRight.add(Box.createVerticalStrut(12));
-		pnlBottomRight.add(createDepositPanel());
-
-		pnlCart.add(pnlBottomRight, BorderLayout.SOUTH);
-
-		pnlRight.add(pnlMenu, BorderLayout.NORTH);
-		pnlRight.add(pnlCart, BorderLayout.CENTER);
-
-
-		body.add(pnlLeft);
-		body.add(pnlRight);
-		return body;
-	}
-
-	private JPanel createDepositPanel() {
-		JPanel panel = new JPanel(new BorderLayout());
-		panel.setBackground(new Color(255, 252, 235));
-		panel.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(new Color(245, 203, 92), 1, true), new EmptyBorder(14, 16, 14, 16)));
-
-		JPanel content = new JPanel();
-		content.setOpaque(false);
-		content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-
-		JLabel lblTitle = new JLabel("Tiền cọc phải thu");
-		lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
-		lblTitle.setForeground(new Color(146, 64, 14));
-		content.add(lblTitle);
-		content.add(Box.createVerticalStrut(14));
-
-		lblPhiDatBan = new JLabel("250.000 đ");
-		lblCocMon = new JLabel("0 đ");
-		lblTongTienCoc = new JLabel("250.000 đ");
-
-		content.add(createMoneyInfoRow("Phí đặt bàn:", lblPhiDatBan));
-		content.add(Box.createVerticalStrut(8));
-		content.add(createMoneyInfoRow("Cọc món đặt trước (30%):", lblCocMon));
-		content.add(Box.createVerticalStrut(10));
-
-		JSeparator sep = new JSeparator();
-		sep.setForeground(new Color(245, 203, 92));
-		content.add(sep);
-		content.add(Box.createVerticalStrut(10));
-
-		JPanel totalRow = new JPanel(new BorderLayout());
-		totalRow.setOpaque(false);
-
-		JLabel lblTotalText = new JLabel("Tổng tiền cọc:");
-		lblTotalText.setFont(new Font("Segoe UI", Font.BOLD, 15));
-		lblTotalText.setForeground(new Color(146, 64, 14));
-
-		lblTongTienCoc.setFont(new Font("Segoe UI", Font.BOLD, 16));
-		lblTongTienCoc.setForeground(RED_MAIN);
-
-		totalRow.add(lblTotalText, BorderLayout.WEST);
-		totalRow.add(lblTongTienCoc, BorderLayout.EAST);
-
-		content.add(totalRow);
-		content.add(Box.createVerticalStrut(10));
-
-		JLabel lblNote = new JLabel("* Phí đặt bàn: 250.000đ | Đặt món trước: thu 30% tổng tiền món");
-		lblNote.setFont(new Font("Segoe UI", Font.ITALIC, 12));
-		lblNote.setForeground(TEXT_GRAY);
-		content.add(lblNote);
-
-		panel.add(content, BorderLayout.CENTER);
-		return panel;
-	}
-
-	private JPanel createMoneyInfoRow(String label, JLabel valueLabel) {
-		JPanel row = new JPanel(new BorderLayout());
-		row.setOpaque(false);
-
-		JLabel lbl = new JLabel(label);
-		lbl.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-		lbl.setForeground(new Color(80, 80, 80));
-
-		valueLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-		valueLabel.setForeground(new Color(80, 80, 80));
-		valueLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-
-		row.add(lbl, BorderLayout.WEST);
-		row.add(valueLabel, BorderLayout.EAST);
-		return row;
-	}
-
-	private void capNhatTienCoc() {
-		int tienCocMon = (int) Math.round(tongTien * 0.3);
-		int tongTienCoc = PHI_DAT_BAN_CO_DINH + tienCocMon;
-
-		lblTongTien.setText("Tổng cộng: " + formatMoney(tongTien));
-		lblPhiDatBan.setText(formatMoney(PHI_DAT_BAN_CO_DINH));
-		lblCocMon.setText(formatMoney(tienCocMon));
-		lblTongTienCoc.setText(formatMoney(tongTienCoc));
-	}
-
-	private String getIconByName(String ten) {
-		if (ten == null) {
-			return "🍽️";
-		}
-		ten = ten.toLowerCase();
-
-		if (ten.contains("bò") || ten.contains("heo") || ten.contains("nướng"))
-			return "🥩";
-		if (ten.contains("gà") || ten.contains("vịt"))
-			return "🍗";
-		if (ten.contains("lẩu") || ten.contains("canh"))
-			return "🍲";
-		if (ten.contains("bia") || ten.contains("nước") || ten.contains("trà") || ten.contains("cà phê"))
-			return "🥤";
-		if (ten.contains("salad") || ten.contains("rau"))
-			return "🥗";
-
-		return "🍽️";
-	}
-
-	private JPanel createFooter() {
-		JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 15));
-		footer.setBackground(Color.WHITE);
-		footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, BORDER_CLR));
-
-		JButton btnHuy = new JButton("Hủy");
-		btnHuy.setPreferredSize(new Dimension(150, 40));
-		btnHuy.setBackground(Color.WHITE);
-		btnHuy.setFocusPainted(false);
-		btnHuy.addActionListener(e -> dispose());
-
-		JButton btnXacNhan = new JButton("Xác nhận đặt chỗ");
-		btnXacNhan.setPreferredSize(new Dimension(200, 40));
-		btnXacNhan.setBackground(RED_MAIN);
-		btnXacNhan.setForeground(Color.WHITE);
-		btnXacNhan.setFont(new Font("Segoe UI", Font.BOLD, 14));
-		btnXacNhan.setFocusPainted(false);
-		btnXacNhan.setBorderPainted(false);
-
-		btnXacNhan.addActionListener(e -> {
-			String tenKhach = txtTenKhach.getText().trim();
-			String sdt = txtSDT.getText().trim();
-			String soLuongStr = txtSoLuong.getText().trim();
-			String thoiGianStr = txtThoiGian.getText().trim();
-			String ghiChu = txtNote.getText().trim();
-
-			if (tenKhach.isEmpty() || sdt.isEmpty() || soLuongStr.isEmpty() || thoiGianStr.isEmpty()
-					|| thoiGianStr.equals("--:-- --")) {
-				JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin bắt buộc (*)", "Cảnh báo",
-						JOptionPane.WARNING_MESSAGE);
-				return;
-			}
-
-			ComboItem selectedBan = (ComboItem) cbBan.getSelectedItem();
-			if (selectedBan == null || selectedBan.getKey().isEmpty()) {
-				JOptionPane.showMessageDialog(this, "Vui lòng chọn bàn để đặt!", "Lưu ý", JOptionPane.WARNING_MESSAGE);
-				return;
-			}
-
-			int soLuongKhach;
-			try {
-				soLuongKhach = Integer.parseInt(soLuongStr);
-				if (soLuongKhach <= 0) {
-					throw new Exception();
-				}
-			} catch (Exception ex) {
-				JOptionPane.showMessageDialog(this, "Số lượng khách phải là số nguyên dương!", "Lỗi",
-						JOptionPane.ERROR_MESSAGE);
-				return;
-			}
-
-			java.util.Date thoiGianDen;
-			try {
-				java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm");
-				thoiGianDen = sdf.parse(thoiGianStr);
-			} catch (Exception ex) {
-				JOptionPane.showMessageDialog(this,
-						"Thời gian không đúng định dạng (yyyy-MM-dd HH:mm)!\nVí dụ: 2026-04-02 19:30", "Lỗi",
-						JOptionPane.ERROR_MESSAGE);
-				return;
-			}
-
-			java.util.Date now = new java.util.Date();
-			long diffMillis = thoiGianDen.getTime() - now.getTime();
-			long diffMinutes = diffMillis / (60 * 1000);
-
-			if (diffMinutes < 60) {
-				JOptionPane.showMessageDialog(this,
-						"Thời gian đặt bàn phải cách hiện tại ít nhất 60 phút!\n"
-								+ "Thời gian sớm nhất có thể đặt: "
-								+ new java.text.SimpleDateFormat("HH:mm dd/MM/yyyy")
-								.format(new java.util.Date(now.getTime() + 60 * 60 * 1000)),
-						"Thời gian không hợp lệ", JOptionPane.WARNING_MESSAGE);
-				return;
-			}
-
-			double tienMonDatTruoc = tongTien;
-			double tienCoc = PHI_DAT_BAN_CO_DINH + Math.round(tongTien * 0.3);
-
-			String maBan = selectedBan.getKey();
-			String tenHienThi = selectedBan.getValue();
-
-			PhieuDatBan phieu = new PhieuDatBan();
-			String maPhieu = "PDB" + System.currentTimeMillis();
-			phieu.setMaPhieu(maPhieu);
-			phieu.setTenKhachHang(tenKhach);
-			phieu.setSoDienThoai(sdt);
-			phieu.setSoLuongKhach(soLuongKhach);
-			phieu.setThoiGianDen(thoiGianDen);
-			phieu.setGhiChu(ghiChu);
-			phieu.setMaBan(maBan);
-			phieu.setTienMonDatTruoc(tienMonDatTruoc);
-			phieu.setTienCoc(tienCoc);
-
-			PhieuDatBanDAO phieuDAO = new PhieuDatBanDAO();
-			BanAnDAO banDAO = new BanAnDAO();
-			DonDatMonDAO donDAO = new DonDatMonDAO();
-
-			String maDon = "DDM" + System.currentTimeMillis();
-			String maNV = (Entity.LuuLog.nhanVienDangNhap != null) ? Entity.LuuLog.nhanVienDangNhap.getMaNV() : "NV001";
-
-			boolean phieuOk = phieuDAO.taoPhieuDatBan(phieu);
-			boolean donOk = true;
-			boolean ctOk = true;
-
-			if (phieuOk && tbModelDaChon.getRowCount() > 0) {
-				donOk = donDAO.taoDonDatMon(maDon, maNV, maBan, ghiChu);
-
-				if (donOk) {
-					for (int i = 0; i < tbModelDaChon.getRowCount(); i++) {
-						String maMonAn = tbModelDaChon.getValueAt(i, 0).toString();
-						int soLuongMon = Integer.parseInt(tbModelDaChon.getValueAt(i, 2).toString());
-						long donGia = Long.parseLong(tbModelDaChon.getValueAt(i, 3).toString());
-
-						if (!donDAO.themChiTietDonDatMon(maDon, maMonAn, soLuongMon, donGia, "")) {
-							ctOk = false;
-							break;
-						}
-					}
-				}
-			}
-
-			if (phieuOk && donOk && ctOk) {
-				if (banDAO.capNhatTrangThai(maBan, "Đã đặt")) {
-					JOptionPane.showMessageDialog(this,
-							"Đặt chỗ thành công cho " + tenKhach + " tại " + tenHienThi + "!\nTiền món đặt trước: "
-									+ formatMoney((int) tienMonDatTruoc) + "\nTổng tiền cọc cần thu: "
-									+ formatMoney((int) tienCoc));
-
-					JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-					if (parentFrame instanceof FrmLeTan) {
-						((FrmLeTan) parentFrame).refreshSoDoBan();
-						((FrmLeTan) parentFrame).loadDanhSachDatCho();
-					}
-					dispose();
-				} else {
-					JOptionPane.showMessageDialog(this, "Lỗi: Đã tạo phiếu nhưng không thể cập nhật trạng thái bàn!",
-							"Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
-				}
-			} else {
-				JOptionPane.showMessageDialog(this,
-						"Lỗi: Không thể lưu thông tin đặt chỗ / món đặt trước vào cơ sở dữ liệu!", "Lỗi CSDL",
-						JOptionPane.ERROR_MESSAGE);
-			}
-		});
-
-		footer.add(btnHuy);
-		footer.add(btnXacNhan);
-		return footer;
-	}
-
-	private JPanel createInputGroup(String title, JComponent input) {
-		JPanel panel = new JPanel(new BorderLayout(0, 5));
-		panel.setBackground(Color.WHITE);
-		panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-
-		JLabel lbl = new JLabel(title);
-		lbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-
-		if (input instanceof JTextField) {
-			((JTextField) input).setPreferredSize(new Dimension(0, 35));
-			input.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER_CLR),
-					new EmptyBorder(0, 10, 0, 10)));
-		} else if (input instanceof JComboBox) {
-			input.setPreferredSize(new Dimension(0, 35));
-		}
-
-		panel.add(lbl, BorderLayout.NORTH);
-		panel.add(input, BorderLayout.CENTER);
-		return panel;
-	}
-
-	private JPanel createFoodItem(String maMonAn, String emoji, String name, int price, String category) {
-		JPanel item = new JPanel(new BorderLayout(10, 0));
-		item.setBackground(Color.WHITE);
-		item.setBorder(new EmptyBorder(10, 10, 10, 10));
-		item.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
-
-		JLabel lblImg = new JLabel(emoji, SwingConstants.CENTER);
-		lblImg.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 30));
-		lblImg.setPreferredSize(new Dimension(60, 60));
-		lblImg.setBorder(BorderFactory.createLineBorder(BORDER_CLR));
-
-		JPanel info = new JPanel(new GridLayout(3, 1));
-		info.setBackground(Color.WHITE);
-
-		JLabel lblName = new JLabel(name);
-		lblName.setFont(new Font("Segoe UI", Font.BOLD, 13));
-
-		JLabel lblPrice = new JLabel(formatMoney(price));
-		lblPrice.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-		lblPrice.setForeground(RED_MAIN);
-
-		JLabel lblCat = new JLabel(category);
-		lblCat.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-		lblCat.setForeground(TEXT_GRAY);
-
-		info.add(lblName);
-		info.add(lblPrice);
-		info.add(lblCat);
-
-		JButton btnAdd = new JButton("Thêm");
-		btnAdd.setBackground(RED_MAIN);
-		btnAdd.setForeground(Color.WHITE);
-		btnAdd.setFocusPainted(false);
-		btnAdd.setBorderPainted(false);
-
-		btnAdd.addActionListener(e -> {
-			boolean isExist = false;
-
-			for (int i = 0; i < tbModelDaChon.getRowCount(); i++) {
-				String maMonDangCo = tbModelDaChon.getValueAt(i, 0).toString();
-				if (maMonDangCo.equals(maMonAn)) {
-					int slCu = Integer.parseInt(tbModelDaChon.getValueAt(i, 2).toString());
-					tbModelDaChon.setValueAt(slCu + 1, i, 2);
-					isExist = true;
-					break;
-				}
-			}
-
-			if (!isExist) {
-				tbModelDaChon.addRow(new Object[] { maMonAn, name, 1, price });
-			}
-
-			tongTien += price;
-			capNhatTienCoc();
-		});
-
-		item.add(lblImg, BorderLayout.WEST);
-		item.add(info, BorderLayout.CENTER);
-		item.add(btnAdd, BorderLayout.EAST);
-
-		return item;
-	}
-
-	private String formatMoney(int amount) {
-		return String.format("%,d đ", amount).replace(',', '.');
-	}
-
-	class ComboItem {
-		private final String key;
-		private final String value;
-
-		public ComboItem(String key, String value) {
-			this.key = key;
-			this.value = value;
-		}
-
-		public String getKey() {
-			return key;
-		}
-
-		public String getValue() {
-			return value;
-		}
-
-		@Override
-		public String toString() {
-			return value;
-		}
-	}
+    private static final Color RED_MAIN = new Color(220, 38, 38);
+    private static final Color BORDER_CLR = new Color(230, 230, 230);
+    private static final Color TEXT_GRAY = new Color(120, 120, 120);
+
+    private static final int PHI_DAT_BAN_CO_DINH = 250000;
+
+    private DefaultTableModel tbModelDaChon;
+    private JLabel lblTongTien;
+    private JLabel lblPhiDatBan;
+    private JLabel lblCocMon;
+    private JLabel lblTongTienCoc;
+
+    private int tongTien = 0;
+
+    private List<BanAn> selectedTables = new ArrayList<>();
+
+    private JTextField txtTenKhach;
+    private JTextField txtSDT;
+    private JTextField txtSoLuong;
+
+    private JTextArea txtNote;
+    private JSpinner spinNgay;
+    private JSpinner spinGio;
+    private JTextField txtTimKiemMon;
+    private JPanel listFood;
+    private List<MonAn> dsMonToanBo;
+
+    // Biến lưu JTabbedPane để làm mới Sơ đồ khi đổi giờ
+    private JTabbedPane tabbedMap;
+
+    public FrmTaoDatCho(JFrame parent) {
+        super(parent, true);
+        setUndecorated(true);
+        setSize(1000, 780);
+        setLocationRelativeTo(parent);
+
+        JPanel root = new JPanel(new BorderLayout());
+        root.setBackground(Color.WHITE);
+        root.setBorder(BorderFactory.createLineBorder(BORDER_CLR, 1));
+
+        root.add(createHeader(), BorderLayout.NORTH);
+        root.add(createBody(), BorderLayout.CENTER);
+        root.add(createFooter(), BorderLayout.SOUTH);
+
+        setContentPane(root);
+    }
+
+    private JPanel createHeader() {
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(Color.WHITE);
+        header.setBorder(new EmptyBorder(20, 30, 20, 30));
+
+        JLabel title = new JLabel("Tạo đặt chỗ mới");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+
+        JButton btnClose = new JButton("✕");
+        btnClose.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        btnClose.setContentAreaFilled(false);
+        btnClose.setBorderPainted(false);
+        btnClose.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnClose.addActionListener(e -> dispose());
+
+        header.add(title, BorderLayout.WEST);
+        header.add(btnClose, BorderLayout.EAST);
+
+        JPanel bottomLine = new JPanel(new BorderLayout());
+        bottomLine.add(header, BorderLayout.CENTER);
+        bottomLine.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_CLR));
+
+        return bottomLine;
+    }
+
+    private JPanel createBody() {
+        JPanel body = new JPanel(new GridLayout(1, 2, 40, 0));
+        body.setBackground(Color.WHITE);
+        body.setBorder(new EmptyBorder(20, 30, 20, 30));
+
+        // ========================================================
+        // PANEL BÊN TRÁI: THÔNG TIN & SƠ ĐỒ BÀN MINI
+        // ========================================================
+        JPanel pnlLeft = new JPanel(new BorderLayout(0, 15));
+        pnlLeft.setBackground(Color.WHITE);
+
+        // 1. Phẩn Top Bên Trái (Nhập liệu)
+        JPanel pnlLeftTop = new JPanel();
+        pnlLeftTop.setLayout(new BoxLayout(pnlLeftTop, BoxLayout.Y_AXIS));
+        pnlLeftTop.setBackground(Color.WHITE);
+
+        JLabel lblInfoTitle = new JLabel("Thông tin khách hàng");
+        lblInfoTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        pnlLeftTop.add(lblInfoTitle);
+        pnlLeftTop.add(Box.createVerticalStrut(15));
+
+        txtTenKhach = new JTextField();
+        txtSDT = new JTextField();
+
+        // TÍNH NĂNG MỚI: Tự động điền Tên khi gõ SĐT
+        txtSDT.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                String sdt = txtSDT.getText().trim();
+                if (sdt.length() >= 10) { // Bắt đầu tìm khi gõ đủ 10 số
+                    timVaDienTenKhachHang(sdt);
+                }
+            }
+        });
+
+        pnlLeftTop.add(createInputGroup("Số điện thoại (Nhập để tự động tìm khách cũ) *", txtSDT));
+        pnlLeftTop.add(Box.createVerticalStrut(15));
+        pnlLeftTop.add(createInputGroup("Tên khách hàng *", txtTenKhach));
+        pnlLeftTop.add(Box.createVerticalStrut(15));
+
+        JPanel rowTime = new JPanel(new GridLayout(1, 3, 10, 0));
+        rowTime.setBackground(Color.WHITE);
+
+        txtSoLuong = new JTextField("2");
+        spinNgay = new JSpinner(new SpinnerDateModel());
+        JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(spinNgay, "dd/MM/yyyy");
+        spinNgay.setEditor(dateEditor);
+
+        spinGio = new JSpinner(new SpinnerDateModel());
+        JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(spinGio, "HH:mm");
+        spinGio.setEditor(timeEditor);
+
+        // TÍNH NĂNG MỚI: Lắng nghe sự kiện đổi giờ để Load lại sơ đồ bàn
+        ChangeListener timeChangeListener = e -> refreshSodoMiniMap();
+        spinNgay.addChangeListener(timeChangeListener);
+        spinGio.addChangeListener(timeChangeListener);
+
+        rowTime.add(createInputGroup("Số lượng *", txtSoLuong));
+        rowTime.add(createInputGroup("Ngày đến *", spinNgay));
+        rowTime.add(createInputGroup("Giờ đến *", spinGio));
+        rowTime.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+        pnlLeftTop.add(rowTime);
+
+        // 2. Phần Center Bên Trái (Sơ đồ bàn Mini)
+        JPanel pnlMapWrap = new JPanel(new BorderLayout(0, 5));
+        pnlMapWrap.setBackground(Color.WHITE);
+
+        JLabel lblMapTitle = new JLabel("Chọn bàn (Sơ đồ tự động gợi ý bàn theo giờ đặt)");
+        lblMapTitle.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        pnlMapWrap.add(lblMapTitle, BorderLayout.NORTH);
+
+        tabbedMap = new JTabbedPane();
+        tabbedMap.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        tabbedMap.setBackground(Color.WHITE);
+        tabbedMap.setFocusable(false);
+
+        pnlMapWrap.add(tabbedMap, BorderLayout.CENTER);
+
+        // Gọi hàm vẽ Sơ đồ bàn lần đầu
+        refreshSodoMiniMap();
+
+        // 3. Phần Bottom Bên Trái (Ghi chú)
+        txtNote = new JTextArea();
+        txtNote.setLineWrap(true);
+        txtNote.setWrapStyleWord(true);
+        txtNote.setBorder(new EmptyBorder(5, 5, 5, 5));
+        JScrollPane scrollNote = new JScrollPane(txtNote);
+        scrollNote.setBorder(BorderFactory.createLineBorder(BORDER_CLR));
+
+        JPanel pnlNoteWrap = createInputGroup("Ghi chú", scrollNote);
+        pnlNoteWrap.setPreferredSize(new Dimension(0, 90));
+
+        pnlLeft.add(pnlLeftTop, BorderLayout.NORTH);
+        pnlLeft.add(pnlMapWrap, BorderLayout.CENTER);
+        pnlLeft.add(pnlNoteWrap, BorderLayout.SOUTH);
+
+        // ========================================================
+        // PANEL BÊN PHẢI: THỰC ĐƠN & TIỀN CỌC
+        // ========================================================
+        JPanel pnlRight = new JPanel(new BorderLayout(0, 15));
+        pnlRight.setBackground(Color.WHITE);
+
+        JPanel pnlMenu = new JPanel(new BorderLayout(0, 5));
+        pnlMenu.setPreferredSize(new Dimension(0, 240));
+        pnlMenu.setBackground(Color.WHITE);
+
+        JPanel pnlMenuHeader = new JPanel(new BorderLayout(0, 5));
+        pnlMenuHeader.setBackground(Color.WHITE);
+        JLabel lblMenuTitle = new JLabel("Thực đơn (Tùy chọn)");
+        lblMenuTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
+
+        txtTimKiemMon = new JTextField();
+        txtTimKiemMon.setPreferredSize(new Dimension(0, 32));
+        txtTimKiemMon.putClientProperty("JTextField.placeholderText", "Tìm kiếm món ăn...");
+        txtTimKiemMon.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                hienThiDanhSachMon();
+            }
+        });
+
+        pnlMenuHeader.add(lblMenuTitle, BorderLayout.NORTH);
+        pnlMenuHeader.add(txtTimKiemMon, BorderLayout.CENTER);
+        pnlMenu.add(pnlMenuHeader, BorderLayout.NORTH);
+
+        listFood = new JPanel();
+        listFood.setLayout(new BoxLayout(listFood, BoxLayout.Y_AXIS));
+        listFood.setBackground(Color.WHITE);
+
+        MonAnDAO monAnDAO = new MonAnDAO();
+        dsMonToanBo = monAnDAO.getAllMonAn();
+        hienThiDanhSachMon();
+
+        JScrollPane scrollFood = new JScrollPane(listFood);
+        scrollFood.setBorder(BorderFactory.createLineBorder(BORDER_CLR));
+        scrollFood.getVerticalScrollBar().setUnitIncrement(16);
+        pnlMenu.add(scrollFood, BorderLayout.CENTER);
+
+        JPanel pnlCart = new JPanel(new BorderLayout(0, 8));
+        pnlCart.setBackground(Color.WHITE);
+
+        JLabel lblCartTitle = new JLabel("Món đã chọn");
+        lblCartTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        pnlCart.add(lblCartTitle, BorderLayout.NORTH);
+
+        String[] columns = {"Mã món", "Tên món", "SL", "Đơn giá"};
+        tbModelDaChon = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        JTable tbDaChon = new JTable(tbModelDaChon);
+        tbDaChon.setRowHeight(25);
+        tbDaChon.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int row = tbDaChon.getSelectedRow();
+                    if (row != -1) {
+                        int slCu = Integer.parseInt(tbModelDaChon.getValueAt(row, 2).toString());
+                        long donGia = Long.parseLong(tbModelDaChon.getValueAt(row, 3).toString());
+
+                        tongTien -= donGia;
+
+                        if (slCu > 1) {
+                            tbModelDaChon.setValueAt(slCu - 1, row, 2);
+                        } else {
+                            tbModelDaChon.removeRow(row);
+                        }
+                        capNhatTienCoc();
+                    }
+                }
+            }
+        });
+        tbDaChon.getColumnModel().getColumn(0).setMinWidth(0);
+        tbDaChon.getColumnModel().getColumn(0).setMaxWidth(0);
+        tbDaChon.getColumnModel().getColumn(0).setWidth(0);
+        tbDaChon.getColumnModel().getColumn(1).setPreferredWidth(180);
+        tbDaChon.getColumnModel().getColumn(2).setPreferredWidth(40);
+        tbDaChon.getColumnModel().getColumn(3).setPreferredWidth(100);
+
+        JScrollPane scrollCart = new JScrollPane(tbDaChon);
+        scrollCart.setBorder(BorderFactory.createLineBorder(BORDER_CLR));
+        pnlCart.add(scrollCart, BorderLayout.CENTER);
+
+        JPanel pnlBottomRight = new JPanel();
+        pnlBottomRight.setLayout(new BoxLayout(pnlBottomRight, BoxLayout.Y_AXIS));
+        pnlBottomRight.setBackground(Color.WHITE);
+
+        lblTongTien = new JLabel("Tổng cộng: 0 đ");
+        lblTongTien.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblTongTien.setForeground(RED_MAIN);
+        lblTongTien.setAlignmentX(Component.RIGHT_ALIGNMENT);
+
+        pnlBottomRight.add(Box.createVerticalStrut(8));
+        pnlBottomRight.add(lblTongTien);
+        pnlBottomRight.add(Box.createVerticalStrut(12));
+        pnlBottomRight.add(createDepositPanel());
+
+        pnlRight.add(pnlMenu, BorderLayout.NORTH);
+        pnlRight.add(pnlCart, BorderLayout.CENTER);
+        pnlRight.add(pnlBottomRight, BorderLayout.SOUTH);
+
+        body.add(pnlLeft);
+        body.add(pnlRight);
+        return body;
+    }
+
+    // ====================================================================
+    // HÀM TỰ ĐỘNG TÌM TÊN KHÁCH KHI GÕ SDT
+    // ====================================================================
+    private void timVaDienTenKhachHang(String sdt) {
+        String sql = "SELECT tenKH FROM KhachHang WHERE soDienThoai = ?";
+        try {
+            Connection con = ConnectDB.getInstance().getConnection();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, sdt);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                String ten = rs.getString("tenKH");
+                txtTenKhach.setText(ten); // Auto điền tên
+                txtTenKhach.setForeground(new Color(22, 163, 74)); // Chữ màu xanh báo hiệu tìm thấy
+            } else {
+                txtTenKhach.setForeground(Color.BLACK); // Không thấy thì reset màu
+            }
+            rs.close();
+            ps.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ====================================================================
+    // HÀM TẠO SƠ ĐỒ MINI (CÓ TÍNH TOÁN 150 PHÚT AN TOÀN CHO BÀN CÓ KHÁCH)
+    // ====================================================================
+    private void refreshSodoMiniMap() {
+        tabbedMap.removeAll();
+        selectedTables.clear(); // Reset bàn đã chọn mỗi khi đổi giờ
+
+        java.util.Date thoiGianDat = getThoiGianDatBan();
+        long diffMinutes = (thoiGianDat.getTime() - System.currentTimeMillis()) / 60000;
+
+        BanAnDAO dao = new BanAnDAO();
+        List<BanAn> dsBan = dao.getAllBanAn();
+
+        String[] tangList = {"Tầng 1", "Tầng 2", "Phòng VIP"};
+
+        for (String tang : tangList) {
+            JPanel pnlFloor = new JPanel(new GridLayout(0, 4, 8, 8));
+            pnlFloor.setBackground(Color.WHITE);
+            pnlFloor.setBorder(new EmptyBorder(8, 8, 8, 8));
+
+            for (BanAn ban : dsBan) {
+                if (ban.getViTri() != null && ban.getViTri().trim().equalsIgnoreCase(tang)) {
+                    String status = ban.getTrangThai() != null ? ban.getTrangThai().trim() : "";
+
+                    boolean hienThiBan = false;
+                    boolean laBanSapTrong = false;
+
+                    if (status.equalsIgnoreCase("Trống")) {
+                        hienThiBan = true;
+                    } else if (status.equalsIgnoreCase("Có khách")) {
+                        // NẾU KHÁCH ĐẶT CÁCH HIỆN TẠI >= 150 PHÚT THÌ CHO PHÉP CHỌN BÀN ĐANG CÓ KHÁCH
+                        if (diffMinutes >= 150) {
+                            hienThiBan = true;
+                            laBanSapTrong = true;
+                        }
+                    }
+
+                    if (hienThiBan) {
+                        pnlFloor.add(createMiniTableCard(ban, laBanSapTrong));
+                    }
+                }
+            }
+
+            JPanel wrapTop = new JPanel(new BorderLayout());
+            wrapTop.setBackground(Color.WHITE);
+            wrapTop.add(pnlFloor, BorderLayout.NORTH);
+
+            JScrollPane scrollMap = new JScrollPane(wrapTop);
+            scrollMap.setBorder(BorderFactory.createLineBorder(BORDER_CLR));
+            scrollMap.getVerticalScrollBar().setUnitIncrement(16);
+
+            tabbedMap.addTab(tang, scrollMap);
+        }
+    }
+
+    private JPanel createMiniTableCard(BanAn ban, boolean laBanSapTrong) {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createLineBorder(BORDER_CLR, 1, true));
+        card.setPreferredSize(new Dimension(80, 65));
+        card.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        JLabel lblName = new JLabel(ban.getTenBan(), SwingConstants.CENTER);
+        lblName.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblName.setForeground(new Color(40, 40, 40));
+
+        JPanel pnlBottom = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        pnlBottom.setOpaque(false);
+
+        JLabel lblCap = new JLabel("🪑 " + ban.getSucChua());
+        lblCap.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 11));
+        lblCap.setForeground(TEXT_GRAY);
+        pnlBottom.add(lblCap);
+
+        // Hiển thị chữ nhỏ màu đỏ để Lễ tân biết bàn này hiện đang có khách nhưng sẽ dọn kịp
+        if (laBanSapTrong) {
+            JLabel lblNote = new JLabel("(Sẽ trống)");
+            lblNote.setFont(new Font("Segoe UI", Font.ITALIC, 10));
+            lblNote.setForeground(new Color(239, 68, 68));
+            pnlBottom.add(lblNote);
+        }
+
+        card.add(lblName, BorderLayout.CENTER);
+        card.add(pnlBottom, BorderLayout.SOUTH);
+
+        card.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (selectedTables.contains(ban)) {
+                    selectedTables.remove(ban);
+                    card.setBackground(Color.WHITE);
+                    card.setBorder(BorderFactory.createLineBorder(BORDER_CLR, 1, true));
+                    lblName.setForeground(new Color(40, 40, 40));
+                } else {
+                    selectedTables.add(ban);
+                    card.setBackground(new Color(254, 226, 226));
+                    card.setBorder(BorderFactory.createLineBorder(RED_MAIN, 2, true));
+                    lblName.setForeground(RED_MAIN);
+                }
+            }
+        });
+        return card;
+    }
+
+    // ====================================================================
+    // HÀM LẤY NGÀY GIỜ TỪ SPINNER
+    // ====================================================================
+    private java.util.Date getThoiGianDatBan() {
+        java.util.Date datePart = (java.util.Date) spinNgay.getValue();
+        java.util.Date timePart = (java.util.Date) spinGio.getValue();
+
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.setTime(datePart);
+        java.util.Calendar timeCal = java.util.Calendar.getInstance();
+        timeCal.setTime(timePart);
+
+        cal.set(java.util.Calendar.HOUR_OF_DAY, timeCal.get(java.util.Calendar.HOUR_OF_DAY));
+        cal.set(java.util.Calendar.MINUTE, timeCal.get(java.util.Calendar.MINUTE));
+        cal.set(java.util.Calendar.SECOND, 0);
+
+        return cal.getTime();
+    }
+
+
+    private void hienThiDanhSachMon() {
+        listFood.removeAll();
+        String keyword = txtTimKiemMon.getText().toLowerCase();
+
+        for (MonAn mon : dsMonToanBo) {
+            if (!mon.isTinhTrang()) continue;
+
+            String ten = mon.getTenMon();
+            if (keyword.isEmpty() || ten.toLowerCase().contains(keyword)) {
+                int gia = (int) mon.getGiaMon();
+                String icon = getIconByName(ten);
+                listFood.add(createFoodItem(mon.getMaMonAn(), icon, ten, gia, "Món ăn"));
+                listFood.add(Box.createVerticalStrut(10));
+            }
+        }
+        listFood.revalidate();
+        listFood.repaint();
+    }
+
+    private JPanel createDepositPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(new Color(255, 252, 235));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(245, 203, 92), 1, true), new EmptyBorder(14, 16, 14, 16)));
+
+        JPanel content = new JPanel();
+        content.setOpaque(false);
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+
+        JLabel lblTitle = new JLabel("Tiền cọc phải thu");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblTitle.setForeground(new Color(146, 64, 14));
+        content.add(lblTitle);
+        content.add(Box.createVerticalStrut(14));
+
+        lblPhiDatBan = new JLabel("250.000 đ");
+        lblCocMon = new JLabel("0 đ");
+        lblTongTienCoc = new JLabel("250.000 đ");
+
+        content.add(createMoneyInfoRow("Phí đặt bàn:", lblPhiDatBan));
+        content.add(Box.createVerticalStrut(8));
+        content.add(createMoneyInfoRow("Cọc món đặt trước (30%):", lblCocMon));
+        content.add(Box.createVerticalStrut(10));
+
+        JSeparator sep = new JSeparator();
+        sep.setForeground(new Color(245, 203, 92));
+        content.add(sep);
+        content.add(Box.createVerticalStrut(10));
+
+        JPanel totalRow = new JPanel(new BorderLayout());
+        totalRow.setOpaque(false);
+
+        JLabel lblTotalText = new JLabel("Tổng tiền cọc:");
+        lblTotalText.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        lblTotalText.setForeground(new Color(146, 64, 14));
+
+        lblTongTienCoc.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblTongTienCoc.setForeground(RED_MAIN);
+
+        totalRow.add(lblTotalText, BorderLayout.WEST);
+        totalRow.add(lblTongTienCoc, BorderLayout.EAST);
+
+        content.add(totalRow);
+        content.add(Box.createVerticalStrut(10));
+
+        JLabel lblNote = new JLabel("<html><div style='text-align:right'><i>* Phí đặt bàn: 250.000đ<br/>* Đặt món trước: thu 30% tổng tiền món</i></div></html>");
+        lblNote.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblNote.setForeground(TEXT_GRAY);
+        content.add(lblNote);
+
+        panel.add(content, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel createMoneyInfoRow(String label, JLabel valueLabel) {
+        JPanel row = new JPanel(new BorderLayout());
+        row.setOpaque(false);
+
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lbl.setForeground(new Color(80, 80, 80));
+
+        valueLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        valueLabel.setForeground(new Color(80, 80, 80));
+        valueLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+
+        row.add(lbl, BorderLayout.WEST);
+        row.add(valueLabel, BorderLayout.EAST);
+        return row;
+    }
+
+    private void capNhatTienCoc() {
+        int tienCocMon = (int) Math.round(tongTien * 0.3);
+        int tongTienCoc = PHI_DAT_BAN_CO_DINH + tienCocMon;
+
+        lblTongTien.setText("Tổng cộng: " + formatMoney(tongTien));
+        lblPhiDatBan.setText(formatMoney(PHI_DAT_BAN_CO_DINH));
+        lblCocMon.setText(formatMoney(tienCocMon));
+        lblTongTienCoc.setText(formatMoney(tongTienCoc));
+    }
+
+    private String getIconByName(String ten) {
+        if (ten == null) return "🍽️";
+        ten = ten.toLowerCase();
+
+        if (ten.contains("bò") || ten.contains("heo") || ten.contains("nướng")) return "🥩";
+        if (ten.contains("gà") || ten.contains("vịt")) return "🍗";
+        if (ten.contains("lẩu") || ten.contains("canh")) return "🍲";
+        if (ten.contains("bia") || ten.contains("nước") || ten.contains("trà") || ten.contains("cà phê")) return "🥤";
+        if (ten.contains("salad") || ten.contains("rau")) return "🥗";
+
+        return "🍽️";
+    }
+
+    private JPanel createFooter() {
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 15));
+        footer.setBackground(Color.WHITE);
+        footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, BORDER_CLR));
+
+        JButton btnHuy = new JButton("Hủy");
+        btnHuy.setPreferredSize(new Dimension(150, 40));
+        btnHuy.setBackground(Color.WHITE);
+        btnHuy.setFocusPainted(false);
+        btnHuy.addActionListener(e -> dispose());
+
+        JButton btnXacNhan = new JButton("Xác nhận đặt chỗ");
+        btnXacNhan.setPreferredSize(new Dimension(200, 40));
+        btnXacNhan.setBackground(RED_MAIN);
+        btnXacNhan.setForeground(Color.WHITE);
+        btnXacNhan.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnXacNhan.setFocusPainted(false);
+        btnXacNhan.setBorderPainted(false);
+
+        btnXacNhan.addActionListener(e -> {
+            String tenKhach = txtTenKhach.getText().trim();
+            String sdt = txtSDT.getText().trim();
+            String soLuongStr = txtSoLuong.getText().trim();
+            String ghiChu = txtNote.getText().trim();
+
+            if (tenKhach.isEmpty() || sdt.isEmpty() || soLuongStr.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin bắt buộc (*)", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            if (selectedTables.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng click chọn ít nhất 1 bàn trên sơ đồ!", "Lưu ý", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            int soLuongKhach;
+            try {
+                soLuongKhach = Integer.parseInt(soLuongStr);
+                if (soLuongKhach <= 0) throw new Exception();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Số lượng khách phải là số nguyên dương!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            int tongSucChua = 0;
+            StringBuilder tenCacBanBuilder = new StringBuilder();
+            for(BanAn ban : selectedTables) {
+                tongSucChua += ban.getSucChua();
+                tenCacBanBuilder.append(ban.getTenBan()).append(", ");
+            }
+            String tenCacBan = tenCacBanBuilder.toString();
+            if(tenCacBan.endsWith(", ")) tenCacBan = tenCacBan.substring(0, tenCacBan.length() - 2);
+
+            if (soLuongKhach > tongSucChua) {
+                String msg = "Khách đặt " + soLuongKhach + " người, nhưng các bàn đã chọn chỉ chứa được tổng " + tongSucChua + " người.\n"
+                        + "Bạn có muốn tiếp tục (kê thêm ghế) không?";
+                int choice = JOptionPane.showConfirmDialog(this, msg, "Cảnh báo vượt sức chứa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                if (choice != JOptionPane.YES_OPTION) return;
+            }
+
+            java.util.Date thoiGianDen = getThoiGianDatBan();
+
+            java.util.Date now = new java.util.Date();
+            long diffMillis = thoiGianDen.getTime() - now.getTime();
+            long diffMinutes = diffMillis / (60 * 1000);
+
+            if (diffMinutes < 60) {
+                JOptionPane.showMessageDialog(this,
+                        "Thời gian đặt bàn phải cách hiện tại ít nhất 60 phút!\n"
+                                + "Sớm nhất: " + new java.text.SimpleDateFormat("HH:mm dd/MM/yyyy").format(new java.util.Date(now.getTime() + 60 * 60 * 1000)),
+                        "Thời gian không hợp lệ", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            double tienMonDatTruoc = tongTien;
+            double tienCoc = PHI_DAT_BAN_CO_DINH + Math.round(tongTien * 0.3);
+
+            String maBanDauTien = selectedTables.get(0).getMaBan();
+
+            PhieuDatBan phieu = new PhieuDatBan();
+            String maPhieu = "PDB" + System.currentTimeMillis();
+            phieu.setMaPhieu(maPhieu);
+            phieu.setTenKhachHang(tenKhach);
+            phieu.setSoDienThoai(sdt);
+            phieu.setSoLuongKhach(soLuongKhach);
+            phieu.setThoiGianDen(thoiGianDen);
+            phieu.setGhiChu(ghiChu);
+            phieu.setMaBan(maBanDauTien);
+            phieu.setTienMonDatTruoc(tienMonDatTruoc);
+            phieu.setTienCoc(tienCoc);
+
+            PhieuDatBanDAO phieuDAO = new PhieuDatBanDAO();
+            BanAnDAO banDAO = new BanAnDAO();
+            DonDatMonDAO donDAO = new DonDatMonDAO();
+
+            String maDon = "DDM" + System.currentTimeMillis();
+            String maNV = (Entity.LuuLog.nhanVienDangNhap != null) ? Entity.LuuLog.nhanVienDangNhap.getMaNV() : "NV001";
+
+            boolean phieuOk = phieuDAO.taoPhieuDatBan(phieu);
+            boolean donOk = true;
+            boolean ctOk = true;
+            boolean chiTietBanOk = true;
+
+            if (phieuOk) {
+                try {
+                    java.sql.Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
+                    java.sql.PreparedStatement psCT = con.prepareStatement("INSERT INTO ChiTietDatBan (maPhieu, maBan) VALUES (?, ?)");
+
+                    for(BanAn ban : selectedTables) {
+                        psCT.setString(1, maPhieu);
+                        psCT.setString(2, ban.getMaBan());
+                        psCT.executeUpdate();
+
+                        banDAO.capNhatTrangThai(ban.getMaBan(), "Đã đặt");
+                    }
+                    psCT.close();
+                } catch (Exception ex) {
+                    chiTietBanOk = false;
+                    ex.printStackTrace();
+                    System.err.println("Lỗi lưu ChiTietDatBan. Vui lòng tạo bảng này trong SQL Server!");
+                }
+
+                if (tbModelDaChon.getRowCount() > 0) {
+                    donOk = donDAO.taoDonDatMon(maDon, maNV, maBanDauTien, ghiChu);
+                    if (donOk) {
+                        for (int i = 0; i < tbModelDaChon.getRowCount(); i++) {
+                            String maMonAn = tbModelDaChon.getValueAt(i, 0).toString();
+                            int soLuongMon = Integer.parseInt(tbModelDaChon.getValueAt(i, 2).toString());
+                            long donGia = Long.parseLong(tbModelDaChon.getValueAt(i, 3).toString());
+
+                            if (!donDAO.themChiTietDonDatMon(maDon, maMonAn, soLuongMon, donGia, "")) {
+                                ctOk = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (phieuOk && donOk && ctOk && chiTietBanOk) {
+                JOptionPane.showMessageDialog(this,
+                        "Đặt chỗ thành công cho " + tenKhach + " tại các bàn: " + tenCacBan + "!\n"
+                                + "Tiền món đặt trước: " + formatMoney((int) tienMonDatTruoc) + "\n"
+                                + "Tổng tiền cọc cần thu: " + formatMoney((int) tienCoc));
+
+                JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+                if (parentFrame instanceof FrmLeTan) {
+                    ((FrmLeTan) parentFrame).refreshSoDoBan();
+                    ((FrmLeTan) parentFrame).loadDanhSachDatCho();
+                }
+                dispose();
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Lỗi: Không thể lưu thông tin đặt chỗ. Vui lòng kiểm tra lại CSDL!", "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        footer.add(btnHuy);
+        footer.add(btnXacNhan);
+        return footer;
+    }
+
+    private JPanel createInputGroup(String title, JComponent input) {
+        JPanel panel = new JPanel(new BorderLayout(0, 5));
+        panel.setBackground(Color.WHITE);
+
+        JLabel lbl = new JLabel(title);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+
+        if (input instanceof JTextField) {
+            ((JTextField) input).setPreferredSize(new Dimension(0, 35));
+            input.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER_CLR),
+                    new EmptyBorder(0, 10, 0, 10)));
+            panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+        }
+
+        panel.add(lbl, BorderLayout.NORTH);
+        panel.add(input, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel createFoodItem(String maMonAn, String emoji, String name, int price, String category) {
+        JPanel item = new JPanel(new BorderLayout(10, 0));
+        item.setBackground(Color.WHITE);
+        item.setBorder(new EmptyBorder(10, 10, 10, 10));
+        item.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
+
+        JLabel lblImg = new JLabel(emoji, SwingConstants.CENTER);
+        lblImg.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 30));
+        lblImg.setPreferredSize(new Dimension(60, 60));
+        lblImg.setBorder(BorderFactory.createLineBorder(BORDER_CLR));
+
+        JPanel info = new JPanel(new GridLayout(3, 1));
+        info.setBackground(Color.WHITE);
+
+        JLabel lblName = new JLabel(name);
+        lblName.setFont(new Font("Segoe UI", Font.BOLD, 13));
+
+        JLabel lblPrice = new JLabel(formatMoney(price));
+        lblPrice.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblPrice.setForeground(RED_MAIN);
+
+        JLabel lblCat = new JLabel(category);
+        lblCat.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lblCat.setForeground(TEXT_GRAY);
+
+        info.add(lblName);
+        info.add(lblPrice);
+        info.add(lblCat);
+
+        JButton btnAdd = new JButton("Thêm");
+        btnAdd.setBackground(RED_MAIN);
+        btnAdd.setForeground(Color.WHITE);
+        btnAdd.setFocusPainted(false);
+        btnAdd.setBorderPainted(false);
+
+        btnAdd.addActionListener(e -> {
+            boolean isExist = false;
+
+            for (int i = 0; i < tbModelDaChon.getRowCount(); i++) {
+                String maMonDangCo = tbModelDaChon.getValueAt(i, 0).toString();
+                if (maMonDangCo.equals(maMonAn)) {
+                    int slCu = Integer.parseInt(tbModelDaChon.getValueAt(i, 2).toString());
+                    tbModelDaChon.setValueAt(slCu + 1, i, 2);
+                    isExist = true;
+                    break;
+                }
+            }
+
+            if (!isExist) {
+                tbModelDaChon.addRow(new Object[]{maMonAn, name, 1, price});
+            }
+
+            tongTien += price;
+            capNhatTienCoc();
+        });
+
+        item.add(lblImg, BorderLayout.WEST);
+        item.add(info, BorderLayout.CENTER);
+        item.add(btnAdd, BorderLayout.EAST);
+
+        return item;
+    }
+
+    private String formatMoney(int amount) {
+        return String.format("%,d đ", amount).replace(',', '.');
+    }
 }
