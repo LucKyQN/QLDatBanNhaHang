@@ -37,12 +37,12 @@ public class FrmQLMonAn extends JPanel {
 		root.setBorder(new EmptyBorder(20, 24, 24, 24));
 
 		root.add(createTopBar(), BorderLayout.NORTH);
-		root.add(createTablePanel(), BorderLayout.CENTER); // Bảng chiếm toàn bộ không gian còn lại
+		root.add(createTablePanel(), BorderLayout.CENTER);
 
 		add(root, BorderLayout.CENTER);
 	}
 
-	// ==================== TOP BAR ====================
+
 	private JPanel createTopBar() {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBackground(Color.WHITE);
@@ -72,7 +72,7 @@ public class FrmQLMonAn extends JPanel {
 		return panel;
 	}
 
-	// ==================== BẢNG MON ĂN ====================
+
 	private JPanel createTablePanel() {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBackground(Color.WHITE);
@@ -121,7 +121,7 @@ public class FrmQLMonAn extends JPanel {
 		return panel;
 	}
 
-	// ==================== DIALOG CHI TIẾT (double-click) ====================
+
 	private void moDialogChiTiet(MonAn mon) {
 		Window window = SwingUtilities.getWindowAncestor(this);
 		Frame owner = window instanceof Frame ? (Frame) window : null;
@@ -250,7 +250,7 @@ public class FrmQLMonAn extends JPanel {
 		label.setIcon(new ImageIcon(img));
 	}
 
-	// ==================== LOAD TABLE ====================
+
 	private void loadTable() {
 		model.setRowCount(0);
 		dsMonAn = dao.getAllMonAn();
@@ -269,7 +269,7 @@ public class FrmQLMonAn extends JPanel {
 		return dsMonAn.get(row);
 	}
 
-	// ==================== CRUD ====================
+
 	private void moDialogThem() {
 		Window window = SwingUtilities.getWindowAncestor(this);
 		Frame owner = window instanceof Frame ? (Frame) window : null;
@@ -313,7 +313,7 @@ public class FrmQLMonAn extends JPanel {
 	}
 
 
-	// ==================== DIALOG THÊM/SỬA ====================
+
 	static class MonAnDialog extends JDialog {
 
 		private final MonAnDAO dao;
@@ -394,8 +394,8 @@ public class FrmQLMonAn extends JPanel {
 			topFields.add(createField("Số lượng tồn", txtSoLuongTon));
 			topFields.add(createField("Giá bán", txtGiaBan));
 			topFields.add(createField("Tình trạng", chkTinhTrang));
-			topFields.add(new JLabel()); // Ô trống để căn lưới
-			topFields.add(new JLabel()); // Ô trống để căn lưới
+			topFields.add(new JLabel());
+			topFields.add(new JLabel());
 
 			// 2. Nhóm Mô tả và Ghi chú (JTextArea)
 			JPanel textAreasPanel = new JPanel(new GridLayout(2, 1, 12, 12));
@@ -428,7 +428,6 @@ public class FrmQLMonAn extends JPanel {
 			anhPanel.add(createField("Đường dẫn ảnh", txtAnhMon), BorderLayout.CENTER);
 			anhPanel.add(btnChonAnh, BorderLayout.EAST);
 
-			// 5. Hình ảnh preview bên phải
 			lblPreviewAnh = new JLabel("Chưa có ảnh", SwingConstants.CENTER);
 			lblPreviewAnh.setPreferredSize(new Dimension(180, 140));
 			lblPreviewAnh.setBorder(BorderFactory.createLineBorder(new Color(210, 210, 210)));
@@ -466,7 +465,7 @@ public class FrmQLMonAn extends JPanel {
 			JLabel lb = new JLabel(label);
 			lb.setFont(new Font("Segoe UI", Font.PLAIN, 13));
 			p.add(lb, BorderLayout.NORTH);
-			JScrollPane sp = new JScrollPane(area); // Thêm thanh cuộn cho Text Area
+			JScrollPane sp = new JScrollPane(area);
 			p.add(sp, BorderLayout.CENTER);
 			return p;
 		}
@@ -576,7 +575,7 @@ public class FrmQLMonAn extends JPanel {
 
 			if (maMon.isEmpty() || tenMon.isEmpty() || danhMuc == null || donVi.isEmpty() || slText.isEmpty()
 					|| giaText.isEmpty())
-				throw new Exception("Vui lòng nhập đầy đủ thông tin bắt buộc.");
+				throw new Exception("Vui lòng nhập đầy đủ thông tin");
 
 			int soLuong;
 			double giaBan;

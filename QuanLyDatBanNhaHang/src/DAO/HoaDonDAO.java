@@ -22,42 +22,79 @@ public class HoaDonDAO {
     public List<BanAnModel> getDanhSachBanChuaThanhToan() {
         List<BanAnModel> list = new ArrayList<>();
 
-        String sql = "SELECT b.maBan, b.tenBan, b.sucChua, h.maHD, h.tenKhachLe, h.sdtKhachLe, h.ngayGioLap, "
-                + "       h.maPhieuDatBan, "
-                + "       (SELECT COALESCE(SUM(thanhTien), 0) FROM ChiTietHoaDon WHERE maHD = h.maHD AND ISNULL(trangThaiPhucVu, '') <> N'Hủy') AS tamTinh, "
-                + "       ISNULL(p.tienCoc, 0) AS tienCoc, " + "       ISNULL(p.tienMonDatTruoc, 0) AS tienMonDatTruoc "
-                + "FROM BanAn b " + "INNER JOIN HoaDon h ON b.maBan = h.maBan "
-                + "LEFT JOIN PhieuDatBan p ON h.maPhieuDatBan = p.maPhieu "
-                + "WHERE h.trangThaiThanhToan IN (N'Chờ thanh toán') "
-                + "AND b.trangThai IN (N'Chờ thanh toán') "
-                + "AND (SELECT COALESCE(SUM(thanhTien), 0) FROM ChiTietHoaDon WHERE maHD = h.maHD AND ISNULL(trangThaiPhucVu, '') <> N'Hủy') >= 0";
+        String sql = "SELECT hd.maHD, b.maBan, b.tenBan, hd.tenKhachLe AS tenKhachHang, hd.ngayGioLap AS gioVao, " +
+                "       ISNULL(p.tienCoc, 0) AS tienCoc, " +
+                "       ISNULL((SELECT SUM(thanhTien) " +
+                "               FROM ChiTietHoaDon " +
+                "               WHERE maHD = hd.maHD AND ISNULL(trangThaiPhucVu, '') <> N'Hủy'), 0) AS tamTinh " +
+                "FROM HoaDon hd " +
+                "JOIN BanAn b ON hd.maBan = b.maBan " +
+                "LEFT JOIN PhieuDatBan p ON hd.maPhieuDatBan = p.maPhieu " +
+                "WHERE hd.trangThaiThanhToan = N'Chờ thanh toán' " +
+
+                "UNION " +
+
+                "SELECT hd.maHD, b.maBan, b.tenBan, hd.tenKhachLe AS tenKhachHang, hd.ngayGioLap AS gioVao, " +
+                "       ISNULL(p.tienCoc, 0) AS tienCoc, " +
+                "       ISNULL((SELECT SUM(thanhTien) " +
+                "               FROM ChiTietHoaDon " +
+                "               WHERE maHD = hd.maHD AND ISNULL(trangThaiPhucVu, '') <> N'Hủy'), 0) AS tamTinh " +
+                "FROM HoaDon hd " +
+                "JOIN ChiTietDatBan ct ON hd.maPhieuDatBan = ct.maPhieu " +
+                "JOIN BanAn b ON ct.maBan = b.maBan " +
+                "LEFT JOIN PhieuDatBan p ON hd.maPhieuDatBan = p.maPhieu " +
+                "WHERE hd.trangThaiThanhToan = N'Chờ thanh toán'";
 
         try {
             Connection con = getConnection();
             PreparedStatement ps = con.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
 
+            java.util.Map<String, BanAnModel> map = new java.util.LinkedHashMap<>();
+
             while (rs.next()) {
-                BanAnModel ban = new BanAnModel();
-                ban.maBan = rs.getString("maBan");
-                ban.tenBan = rs.getString("tenBan");
-                ban.sucChua = rs.getInt("sucChua");
-                ban.maHD = rs.getString("maHD");
-                ban.maPhieuDatBan = rs.getString("maPhieuDatBan");
-                ban.tenKH = rs.getString("tenKhachLe");
-                ban.sdt = rs.getString("sdtKhachLe");
-                ban.tienCoc = (long) rs.getDouble("tienCoc");
-                ban.tienMonDatTruoc = (long) rs.getDouble("tienMonDatTruoc");
-                ban.gioVao = new SimpleDateFormat("HH:mm").format(rs.getTimestamp("ngayGioLap"));
-                ban.tamTinh = (long) rs.getDouble("tamTinh");
-                list.add(ban);
+                String maHD = rs.getString("maHD");
+                String tenBan = rs.getString("tenBan");
+
+                if (map.containsKey(maHD)) {
+                    BanAnModel ban = map.get(maHD);
+                    if (!ban.tenBan.contains(tenBan)) {
+                        ban.tenBan += ", " + tenBan;
+                    }
+                } else {
+                    BanAnModel ban = new BanAnModel();
+                    ban.maHD = maHD;
+                    ban.maBan = rs.getString("maBan");
+                    ban.tenBan = tenBan;
+                    ban.tenKH = rs.getString("tenKhachHang");
+
+                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm");
+                    ban.gioVao = rs.getTimestamp("gioVao") != null
+                            ? sdf.format(rs.getTimestamp("gioVao"))
+                            : "--:--";
+
+                    ban.tienCoc = rs.getLong("tienCoc");
+                    ban.tamTinh = rs.getLong("tamTinh");
+
+                    map.put(maHD, ban);
+                }
             }
+
+            list.addAll(map.values());
             rs.close();
             ps.close();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
+
         return list;
+    }
+
+    private String xoaTrungLapTenBan(String raw) {
+        if (raw == null)
+            return "Bàn vãng lai";
+        java.util.Set<String> set = new java.util.LinkedHashSet<>(java.util.Arrays.asList(raw.split(", ")));
+        return String.join(", ", set);
     }
 
     // Chi tiết món ăn theo maHD
@@ -65,7 +102,8 @@ public class HoaDonDAO {
         List<MonAnModel> ds = new ArrayList<>();
 
         String sql = "SELECT c.ID_CTHD, c.maMonAn, m.tenMonAn, c.soLuong, c.donGia, c.thanhTien, c.trangThaiPhucVu "
-                + "FROM ChiTietHoaDon c " + "JOIN MonAn m ON c.maMonAn = m.maMonAn " + "WHERE c.maHD = ? AND ISNULL(c.trangThaiPhucVu, '') <> N'Hủy'";
+                + "FROM ChiTietHoaDon c " + "JOIN MonAn m ON c.maMonAn = m.maMonAn "
+                + "WHERE c.maHD = ? AND ISNULL(c.trangThaiPhucVu, '') <> N'Hủy'";
 
         try {
             Connection con = getConnection();
@@ -93,10 +131,46 @@ public class HoaDonDAO {
         return ds;
     }
 
+    public String getMaHoaDonDangPhucVuTheoBan(String maBan) {
+        String sql = "SELECT TOP 1 maHD FROM ( " +
+                "   SELECT h.maHD, h.ngayGioLap AS thoiGianTao " +
+                "   FROM HoaDon h " +
+                "   WHERE h.maBan = ? " +
+                "     AND h.trangThaiThanhToan IN (N'Chưa thanh toán', N'Chờ thanh toán') " +
+                "   UNION " +
+                "   SELECT h.maHD, h.ngayGioLap AS thoiGianTao " +
+                "   FROM HoaDon h " +
+                "   JOIN ChiTietDatBan ct ON h.maPhieuDatBan = ct.maPhieu " +
+                "   WHERE ct.maBan = ? " +
+                "     AND h.trangThaiThanhToan IN (N'Chưa thanh toán', N'Chờ thanh toán') " +
+                ") x " +
+                "ORDER BY thoiGianTao DESC";
+
+        try {
+            Connection con = getConnection();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, maBan);
+            ps.setString(2, maBan);
+            ResultSet rs = ps.executeQuery();
+
+            String maHD = null;
+            if (rs.next()) {
+                maHD = rs.getString("maHD");
+            }
+
+            rs.close();
+            ps.close();
+            return maHD;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     // Khuyến mãi đang hiệu lực
     public List<String[]> getKhuyenMaiHieuLuc() {
         List<String[]> list = new ArrayList<>();
-        list.add(new String[]{"NONE", "Không giảm giá", "0", "Phần trăm"});
+        list.add(new String[] { "NONE", "Không giảm giá", "0", "Phần trăm" });
 
         String sql = "SELECT maKM, tenKM, giaTriKM, loaiKM " + "FROM KhuyenMai "
                 + "WHERE trangThai = 1 AND GETDATE() BETWEEN ngayBatDau AND ngayKetThuc " + "ORDER BY tenKM";
@@ -107,8 +181,8 @@ public class HoaDonDAO {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                list.add(new String[]{rs.getString("maKM"), rs.getString("tenKM"),
-                        String.valueOf(rs.getDouble("giaTriKM")), rs.getString("loaiKM")});
+                list.add(new String[] { rs.getString("maKM"), rs.getString("tenKM"),
+                        String.valueOf(rs.getDouble("giaTriKM")), rs.getString("loaiKM") });
             }
 
             rs.close();
@@ -120,7 +194,8 @@ public class HoaDonDAO {
     }
 
     // Thanh toán hóa đơn
-    public boolean thanhToan(String maHD, double tongThanhToan, double giaTriGiam, String maKM) {
+    public boolean thanhToan(String maHD, double tongThanhToan, double giaTriGiam,
+                             String maKM, double tienKhachDua, double tienThuaTraKhach) {
         Connection con = null;
         try {
             con = getConnection();
@@ -135,31 +210,33 @@ public class HoaDonDAO {
                 giaTriGiam = 0;
             }
 
-            String sql1 = "UPDATE HoaDon " + "SET trangThaiThanhToan = N'Đã thanh toán', "
-                    + "    ngayGioThanhToan = GETDATE(), " + "    chietKhau = ?, " + "    tongTien = ? "
-                    + "WHERE maHD = ?";
+            String sql1 = "UPDATE HoaDon " +
+                    "SET trangThaiThanhToan = N'Đã thanh toán', " +
+                    "    ngayGioThanhToan = GETDATE(), " +
+                    "    chietKhau = ?, " +
+                    "    tongTien = ?, " +
+                    "    tienKhachDua = ?, " +
+                    "    tienThuaTraKhach = ? " +
+                    "WHERE maHD = ?";
 
             PreparedStatement ps1 = con.prepareStatement(sql1);
-            ps1.setDouble(1, 0); // cột chietKhau của bạn đang không dùng để lưu % thực tế nữa
+            ps1.setDouble(1, giaTriGiam);
             ps1.setDouble(2, tongThanhToan);
-            ps1.setString(3, maHD);
+            ps1.setDouble(3, tienKhachDua);
+            ps1.setDouble(4, tienThuaTraKhach);
+            ps1.setString(5, maHD);
             int r1 = ps1.executeUpdate();
             ps1.close();
 
-            String sql2 = "UPDATE BanAn SET trangThai = N'Trống' "
-                    + "WHERE maBan = (SELECT maBan FROM HoaDon WHERE maHD = ?)";
-            PreparedStatement ps2 = con.prepareStatement(sql2);
-            ps2.setString(1, maHD);
-            int r2 = ps2.executeUpdate();
-            ps2.close();
 
-            // Xóa dữ liệu khuyến mãi cũ trước
+            capNhatTrangThaiBanTheoHD(con, maHD, "Trống");
+            int r2 = 1;
+
             PreparedStatement psDelete = con.prepareStatement("DELETE FROM HoaDonKhuyenMai WHERE maHD = ?");
             psDelete.setString(1, maHD);
             psDelete.executeUpdate();
             psDelete.close();
 
-            // Nếu có mã KM thì lưu giảm giá thật
             if (maKM != null && !maKM.trim().isEmpty() && !"NONE".equalsIgnoreCase(maKM)) {
                 PreparedStatement psInsert = con
                         .prepareStatement("INSERT INTO HoaDonKhuyenMai(maHD, maKM, giaTriGiam) VALUES (?, ?, ?)");
@@ -170,7 +247,8 @@ public class HoaDonDAO {
                 psInsert.close();
             }
             try {
-                PreparedStatement psGetKhach = con.prepareStatement("SELECT tenKhachLe, sdtKhachLe FROM HoaDon WHERE maHD = ?");
+                PreparedStatement psGetKhach = con
+                        .prepareStatement("SELECT tenKhachLe, sdtKhachLe FROM HoaDon WHERE maHD = ?");
                 psGetKhach.setString(1, maHD);
                 ResultSet rsKhach = psGetKhach.executeQuery();
                 if (rsKhach.next()) {
@@ -341,9 +419,9 @@ public class HoaDonDAO {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                list.add(new String[]{rs.getString("hoTenNV"),
+                list.add(new String[] { rs.getString("hoTenNV"),
                         rs.getString("caLam") != null ? rs.getString("caLam") : "--", rs.getString("trangThai"),
-                        rs.getString("gioBatDau"), String.valueOf((long) rs.getDouble("tienKet")), "0"});
+                        rs.getString("gioBatDau"), String.valueOf((long) rs.getDouble("tienKet")), "0" });
             }
 
             rs.close();
@@ -355,10 +433,18 @@ public class HoaDonDAO {
     }
 
     private void capNhatTrangThaiBanTheoHD(Connection con, String maHD, String trangThaiMoi) throws SQLException {
-        String sql = "UPDATE BanAn SET trangThai = ? " + "WHERE maBan = (SELECT maBan FROM HoaDon WHERE maHD = ?)";
+        String sql = "UPDATE BanAn SET trangThai = ? " +
+                "WHERE maBan = (SELECT maBan FROM HoaDon WHERE maHD = ?) " +
+                "   OR maBan IN ( " +
+                "       SELECT ct.maBan " +
+                "       FROM ChiTietDatBan ct " +
+                "       WHERE ct.maPhieu = (SELECT maPhieuDatBan FROM HoaDon WHERE maHD = ?) " +
+                "   )";
+
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setString(1, trangThaiMoi);
         ps.setString(2, maHD);
+        ps.setString(3, maHD);
         ps.executeUpdate();
         ps.close();
     }
@@ -498,7 +584,7 @@ public class HoaDonDAO {
     }
 
     public boolean taoHoaDonMoi(String maHD, String maNV, String maBan, String tenKH, String sdt, int soNguoi,
-                                String maPhieuDatBan) {
+            String maPhieuDatBan) {
         String sql = "INSERT INTO HoaDon "
                 + "(maHD, maNV, maBan, ngayGioLap, trangThaiThanhToan, tongTien, tenKhachLe, sdtKhachLe, soLuongKhach, maPhieuDatBan) "
                 + "VALUES (?, ?, ?, GETDATE(), N'Chưa thanh toán', 0, ?, ?, ?, ?)";
@@ -635,39 +721,48 @@ public class HoaDonDAO {
             con.commit();
             return ok;
         } catch (Exception e) {
-            if (con != null) try {
-                con.rollback();
-            } catch (Exception ex) {
-            }
+            if (con != null)
+                try {
+                    con.rollback();
+                } catch (Exception ex) {
+                }
             e.printStackTrace();
             return false;
         } finally {
-            if (con != null) try {
-                con.setAutoCommit(true);
-            } catch (Exception ex) {
-            }
+            if (con != null)
+                try {
+                    con.setAutoCommit(true);
+                } catch (Exception ex) {
+                }
         }
     }
 
     public String[] getThongTinKhachVuaMo(String maBan) {
-        String sql = "SELECT TOP 1 tenKhachLe, sdtKhachLe, soLuongKhach, ngayGioLap " + "FROM HoaDon "
-                + "WHERE maBan = ? AND trangThaiThanhToan = N'Chưa thanh toán' " + "ORDER BY ngayGioLap DESC";
+        // Dùng UNION để tìm hóa đơn: Lấy bàn chính (HoaDon) + Lấy bàn phụ
+        // (ChiTietDatBan)
+        String sql = "SELECT TOP 1 * FROM (" +
+                "  SELECT tenKhachLe, sdtKhachLe, soLuongKhach, ngayGioLap AS thoiGianTao " +
+                "  FROM HoaDon WHERE maBan = ? AND trangThaiThanhToan = N'Chưa thanh toán' " +
+                "  UNION " +
+                "  SELECT hd.tenKhachLe, hd.sdtKhachLe, hd.soLuongKhach, hd.ngayGioLap AS thoiGianTao " +
+                "  FROM HoaDon hd JOIN ChiTietDatBan ct ON hd.maPhieuDatBan = ct.maPhieu " +
+                "  WHERE ct.maBan = ? AND hd.trangThaiThanhToan = N'Chưa thanh toán' " +
+                ") AS T ORDER BY thoiGianTao DESC";
         try {
-            Connection con = getConnection();
-            PreparedStatement ps = con.prepareStatement(sql);
+            java.sql.Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
+            java.sql.PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, maBan);
-            ResultSet rs = ps.executeQuery();
-
-            String[] result = null;
+            ps.setString(2, maBan); // Truyền maBan cho cả 2 vế UNION
+            java.sql.ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-                result = new String[]{rs.getString("tenKhachLe"), rs.getString("sdtKhachLe"),
-                        String.valueOf(rs.getInt("soLuongKhach")), sdf.format(rs.getTimestamp("ngayGioLap"))};
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm:ss");
+                return new String[] {
+                        rs.getString("tenKhachLe"),
+                        rs.getString("sdtKhachLe"),
+                        rs.getString("soLuongKhach"),
+                        rs.getTimestamp("thoiGianTao") != null ? sdf.format(rs.getTimestamp("thoiGianTao")) : "--:--"
+                };
             }
-
-            rs.close();
-            ps.close();
-            return result;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -726,44 +821,62 @@ public class HoaDonDAO {
         return ds;
     }
 
-    public boolean copyMonAnTuPhieuSangHoaDon(String maBan, String maHD) {
+    public boolean copyMonAnTuPhieuSangHoaDon(String maPhieu, String maHD) {
         Connection con = null;
         try {
             con = getConnection();
             con.setAutoCommit(false);
 
-            // BƯỚC 1: Copy món từ Đơn đặt trước sang Hóa đơn
-            String sql = "INSERT INTO ChiTietHoaDon (maHD, maMonAn, soLuong, donGia, thanhTien, trangThaiPhucVu, ghiChu) "
-                    + "SELECT ?, ct.maMonAn, ct.soLuong, m.giaBan, (ct.soLuong * m.giaBan), N'Chưa lên', ct.ghiChu "
-                    + "FROM ChiTietDonDatMon ct " + "JOIN DonDatMon d ON ct.maDon = d.maDon "
-                    + "JOIN MonAn m ON ct.maMonAn = m.maMonAn " + "WHERE d.maBan = ? AND d.trangThai = N'Chờ khách'";
+            if (maPhieu == null || maPhieu.trim().isEmpty()) {
+                con.commit();
+                return true;
+            }
 
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, maHD);
-            ps.setString(2, maBan);
-            int rows = ps.executeUpdate();
-            ps.close();
+            String sqlInsert = "INSERT INTO ChiTietHoaDon (maHD, maMonAn, soLuong, donGia, thanhTien, trangThaiPhucVu, ghiChu) "
+                    +
+                    "SELECT ?, x.maMonAn, SUM(x.soLuong) AS tongSoLuong, x.donGia, SUM(x.soLuong) * x.donGia AS thanhTien, N'Chưa lên', x.ghiChu "
+                    +
+                    "FROM ( " +
+                    "    SELECT ct.maMonAn, ct.soLuong, m.giaBan AS donGia, ISNULL(ct.ghiChu, N'') AS ghiChu " +
+                    "    FROM ChiTietDatBan ctdb " +
+                    "    JOIN DonDatMon d ON d.maBan = ctdb.maBan " +
+                    "    JOIN ChiTietDonDatMon ct ON ct.maDon = d.maDon " +
+                    "    JOIN MonAn m ON m.maMonAn = ct.maMonAn " +
+                    "    WHERE ctdb.maPhieu = ? " +
+                    "      AND d.trangThai = N'Chờ khách' " +
+                    ") x " +
+                    "GROUP BY x.maMonAn, x.donGia, x.ghiChu";
 
-            // BƯỚC 2: Cập nhật lại tổng tiền Hóa đơn
-            PreparedStatement psTong = con.prepareStatement(
-                    "UPDATE HoaDon SET tongTien = (SELECT ISNULL(SUM(thanhTien), 0) FROM ChiTietHoaDon WHERE maHD = ?) WHERE maHD = ?");
+            PreparedStatement psInsert = con.prepareStatement(sqlInsert);
+            psInsert.setString(1, maHD);
+            psInsert.setString(2, maPhieu);
+            int rows = psInsert.executeUpdate();
+            psInsert.close();
+
+            // 2) Cập nhật tổng tiền hóa đơn
+            String sqlTong = "UPDATE HoaDon " +
+                    "SET tongTien = (SELECT ISNULL(SUM(thanhTien), 0) FROM ChiTietHoaDon WHERE maHD = ?) " +
+                    "WHERE maHD = ?";
+            PreparedStatement psTong = con.prepareStatement(sqlTong);
             psTong.setString(1, maHD);
             psTong.setString(2, maHD);
             psTong.executeUpdate();
             psTong.close();
 
-            // BƯỚC 3 Đánh dấu Đơn đặt món đã được xử lý
-            String sqlUpdateDon = "UPDATE DonDatMon SET trangThai = N'Đã vào bàn' WHERE maBan = ? AND trangThai = N'Chờ khách'";
+            // 3) Đánh dấu tất cả đơn đặt món của các bàn trong phiếu là đã vào bàn
+            String sqlUpdateDon = "UPDATE DonDatMon " +
+                    "SET trangThai = N'Đã vào bàn' " +
+                    "WHERE maBan IN (SELECT maBan FROM ChiTietDatBan WHERE maPhieu = ?) " +
+                    "  AND trangThai = N'Chờ khách'";
             PreparedStatement psUpdateDon = con.prepareStatement(sqlUpdateDon);
-            psUpdateDon.setString(1, maBan);
+            psUpdateDon.setString(1, maPhieu);
             psUpdateDon.executeUpdate();
             psUpdateDon.close();
 
             con.commit();
-            System.out.println(">>> So mon copy sang hoa don: " + rows);
 
-            // Trả về true vì thao tác thành công (kể cả khi rows = 0 do khách ko đặt món trước)
-            return true;
+            System.out.println(">>> So dong mon copy sang hoa don: " + rows);
+            return true; // vẫn true kể cả rows = 0 nếu khách không đặt món trước
         } catch (Exception e) {
             try {
                 if (con != null)
@@ -933,7 +1046,7 @@ public class HoaDonDAO {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                list.add(new String[]{rs.getString("ngay"), String.valueOf(rs.getLong("doanhThu"))});
+                list.add(new String[] { rs.getString("ngay"), String.valueOf(rs.getLong("doanhThu")) });
             }
 
             rs.close();
@@ -960,8 +1073,8 @@ public class HoaDonDAO {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                list.add(new String[]{rs.getString("tenMonAn"), String.valueOf(rs.getInt("tongSoLuong")),
-                        String.valueOf(rs.getLong("tongDoanhThu"))});
+                list.add(new String[] { rs.getString("tenMonAn"), String.valueOf(rs.getInt("tongSoLuong")),
+                        String.valueOf(rs.getLong("tongDoanhThu")) });
             }
 
             rs.close();
@@ -978,21 +1091,34 @@ public class HoaDonDAO {
     public List<String[]> getLichSuHoaDonTheoNgay(java.util.Date tuNgay, java.util.Date denNgay) {
         List<String[]> list = new ArrayList<>();
 
-        // Nếu không chọn ngày thì mặc định lấy 100 đơn gần nhất cho nhanh
         String topClause = (tuNgay == null && denNgay == null) ? "TOP 100" : "";
 
-        String sql = "SELECT " + topClause + " h.maHD, b.tenBan, h.tenKhachLe, h.ngayGioThanhToan, h.tongTien, h.trangThaiThanhToan "
-                + "FROM HoaDon h "
-                + "LEFT JOIN BanAn b ON h.maBan = b.maBan "
-                + "WHERE h.trangThaiThanhToan IN (N'Đã thanh toán', N'Hủy') ";
+        String sql =
+                "SELECT " + topClause + " * FROM ( " +
+                        "   SELECT h.maHD, b.tenBan, h.tenKhachLe, h.ngayGioThanhToan, h.tongTien, h.trangThaiThanhToan " +
+                        "   FROM HoaDon h " +
+                        "   LEFT JOIN BanAn b ON h.maBan = b.maBan " +
+                        "   WHERE h.trangThaiThanhToan IN (N'Đã thanh toán', N'Hủy') " +
 
-        // Nối thêm điều kiện lọc ngày nếu có
-        if (tuNgay != null && denNgay != null) {
-            sql += "AND CAST(h.ngayGioThanhToan AS DATE) >= CAST(? AS DATE) "
-                    + "AND CAST(h.ngayGioThanhToan AS DATE) <= CAST(? AS DATE) ";
-        }
+                        (tuNgay != null && denNgay != null
+                                ? " AND CAST(h.ngayGioThanhToan AS DATE) >= CAST(? AS DATE) " +
+                                " AND CAST(h.ngayGioThanhToan AS DATE) <= CAST(? AS DATE) "
+                                : "") +
 
-        sql += "ORDER BY h.ngayGioThanhToan DESC";
+                        "   UNION " +
+
+                        "   SELECT h.maHD, b.tenBan, h.tenKhachLe, h.ngayGioThanhToan, h.tongTien, h.trangThaiThanhToan " +
+                        "   FROM HoaDon h " +
+                        "   JOIN ChiTietDatBan ct ON h.maPhieuDatBan = ct.maPhieu " +
+                        "   JOIN BanAn b ON ct.maBan = b.maBan " +
+                        "   WHERE h.trangThaiThanhToan IN (N'Đã thanh toán', N'Hủy') " +
+
+                        (tuNgay != null && denNgay != null
+                                ? " AND CAST(h.ngayGioThanhToan AS DATE) >= CAST(? AS DATE) " +
+                                " AND CAST(h.ngayGioThanhToan AS DATE) <= CAST(? AS DATE) "
+                                : "") +
+
+                        ") X ORDER BY ngayGioThanhToan DESC";
 
         try {
             Connection con = getConnection();
@@ -1001,71 +1127,104 @@ public class HoaDonDAO {
             if (tuNgay != null && denNgay != null) {
                 ps.setDate(1, new java.sql.Date(tuNgay.getTime()));
                 ps.setDate(2, new java.sql.Date(denNgay.getTime()));
+                ps.setDate(3, new java.sql.Date(tuNgay.getTime()));
+                ps.setDate(4, new java.sql.Date(denNgay.getTime()));
             }
 
             ResultSet rs = ps.executeQuery();
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm dd/MM/yyyy");
 
-            while (rs.next()) {
-                String thoiGian = "";
-                if (rs.getTimestamp("ngayGioThanhToan") != null) {
-                    thoiGian = sdf.format(rs.getTimestamp("ngayGioThanhToan"));
-                }
+            java.util.Map<String, String[]> map = new java.util.LinkedHashMap<>();
 
+            while (rs.next()) {
+                String maHD = rs.getString("maHD");
                 String tenBan = rs.getString("tenBan") != null ? rs.getString("tenBan") : "Mang về";
                 String tenKhach = rs.getString("tenKhachLe") != null ? rs.getString("tenKhachLe") : "Khách vãng lai";
+                String thoiGian = rs.getTimestamp("ngayGioThanhToan") != null
+                        ? sdf.format(rs.getTimestamp("ngayGioThanhToan"))
+                        : "";
                 String tongTien = String.format("%,.0f", rs.getDouble("tongTien")).replace(",", ".") + " đ";
+                String trangThai = rs.getString("trangThaiThanhToan");
 
-                list.add(new String[]{
-                        rs.getString("maHD"),
-                        tenBan,
-                        tenKhach,
-                        thoiGian,
-                        tongTien,
-                        rs.getString("trangThaiThanhToan")
-                });
+                if (map.containsKey(maHD)) {
+                    String[] old = map.get(maHD);
+                    if (!old[1].contains(tenBan)) {
+                        old[1] += ", " + tenBan;
+                    }
+                } else {
+                    map.put(maHD, new String[] {
+                            maHD,
+                            tenBan,
+                            tenKhach,
+                            thoiGian,
+                            tongTien,
+                            trangThai
+                    });
+                }
             }
+
+            list.addAll(map.values());
+
             rs.close();
             ps.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
         return list;
     }
 
-    // LẤY CHI TIẾT THÔNG TIN PHỤ CHO LỊCH SỬ HÓA ĐƠN
     public Object[] getThongTinChiTietHoaDonLichSu(String maHD) {
-        // Mảng chứa: [gioVao, gioRa, tenThuNgan, tienCoc, tienGiamGia, tenKhuyenMai]
-        Object[] result = new Object[6];
+
+        Object[] result = new Object[8];
+
         String sql = "SELECT h.ngayGioLap, h.ngayGioThanhToan, nv.hoTenNV, "
                 + "ISNULL(p.tienCoc, 0) AS tienCoc, "
                 + "ISNULL(hk.giaTriGiam, 0) AS tienGiamGia, "
-                + "ISNULL(km.tenKM, N'Không') AS tenKM "
+                + "ISNULL(km.tenKM, N'Không') AS tenKM, "
+                + "ISNULL(h.tienKhachDua, 0) AS tienKhachDua, "
+                + "ISNULL(h.tienThuaTraKhach, 0) AS tienThuaTraKhach "
                 + "FROM HoaDon h "
                 + "LEFT JOIN NhanVien nv ON h.maNV = nv.maNV "
                 + "LEFT JOIN PhieuDatBan p ON h.maPhieuDatBan = p.maPhieu "
                 + "LEFT JOIN HoaDonKhuyenMai hk ON h.maHD = hk.maHD "
                 + "LEFT JOIN KhuyenMai km ON hk.maKM = km.maKM "
                 + "WHERE h.maHD = ?";
+
         try {
             Connection con = getConnection();
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, maHD);
             ResultSet rs = ps.executeQuery();
+
             if (rs.next()) {
                 java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm dd/MM/yyyy");
-                result[0] = rs.getTimestamp("ngayGioLap") != null ? sdf.format(rs.getTimestamp("ngayGioLap")) : "--:--";
-                result[1] = rs.getTimestamp("ngayGioThanhToan") != null ? sdf.format(rs.getTimestamp("ngayGioThanhToan")) : "--:--";
-                result[2] = rs.getString("hoTenNV") != null ? rs.getString("hoTenNV") : "Không xác định";
-                result[3] = (long) rs.getDouble("tienCoc");
-                result[4] = (long) rs.getDouble("tienGiamGia");
+
+                result[0] = rs.getTimestamp("ngayGioLap") != null
+                        ? sdf.format(rs.getTimestamp("ngayGioLap"))
+                        : "--:--";
+
+                result[1] = rs.getTimestamp("ngayGioThanhToan") != null
+                        ? sdf.format(rs.getTimestamp("ngayGioThanhToan"))
+                        : "--:--";
+
+                result[2] = rs.getString("hoTenNV") != null
+                        ? rs.getString("hoTenNV")
+                        : "Không xác định";
+
+                result[3] = rs.getLong("tienCoc");
+                result[4] = rs.getLong("tienGiamGia");
                 result[5] = rs.getString("tenKM");
+                result[6] = rs.getLong("tienKhachDua");
+                result[7] = rs.getLong("tienThuaTraKhach");
             }
+
             rs.close();
             ps.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
         return result;
     }
 }

@@ -160,7 +160,8 @@ public class FrmPhucVu extends JFrame {
 		btnLogout.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 		btnLogout.setForeground(RED_MAIN);
 		btnLogout.addActionListener(e -> {
-			int c = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn đăng xuất không?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+			int c = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn đăng xuất không?", "Xác nhận",
+					JOptionPane.YES_NO_OPTION);
 			if (c == JOptionPane.YES_OPTION) {
 				dispose();
 				new FrmDangNhap().setVisible(true);
@@ -430,12 +431,18 @@ public class FrmPhucVu extends JFrame {
 	private void napBangMonTuHoaDon(String maHD) {
 		tblModel.setRowCount(0);
 
-		String trangThai = banDangChon.trangThai;
-		List<MonAnModel> ds = phucVuService.getMonAnTheoBan(banDangChon.maBan, trangThai);
+		List<MonAnModel> ds = phucVuService.getChiTietHoaDon(maHD);
 
 		for (MonAnModel m : ds) {
-			tblModel.addRow(new Object[] { m.id_cthd, m.maMonAn, m.tenMonAn, m.soLuong, formatTien(m.giaBan),
-					formatTien(m.thanhTien), m.trangThaiPhucVu });
+			tblModel.addRow(new Object[] {
+					m.id_cthd,
+					m.maMonAn,
+					m.tenMonAn,
+					m.soLuong,
+					formatTien(m.giaBan),
+					formatTien(m.thanhTien),
+					m.trangThaiPhucVu
+			});
 		}
 	}
 
@@ -478,14 +485,21 @@ public class FrmPhucVu extends JFrame {
 		txtSearch.setPreferredSize(new Dimension(0, 32));
 		txtSearch.setBorder(BorderFactory.createCompoundBorder(
 				BorderFactory.createLineBorder(new Color(200, 200, 200)),
-				new EmptyBorder(0, 8, 0, 8)
-		));
+				new EmptyBorder(0, 8, 0, 8)));
 
 		// Bắt sự kiện gõ phím đến đâu, lọc danh sách đến đó
 		txtSearch.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-			public void insertUpdate(javax.swing.event.DocumentEvent e) { filter(); }
-			public void removeUpdate(javax.swing.event.DocumentEvent e) { filter(); }
-			public void changedUpdate(javax.swing.event.DocumentEvent e) { filter(); }
+			public void insertUpdate(javax.swing.event.DocumentEvent e) {
+				filter();
+			}
+
+			public void removeUpdate(javax.swing.event.DocumentEvent e) {
+				filter();
+			}
+
+			public void changedUpdate(javax.swing.event.DocumentEvent e) {
+				filter();
+			}
 
 			private void filter() {
 				String keyword = txtSearch.getText().toLowerCase();

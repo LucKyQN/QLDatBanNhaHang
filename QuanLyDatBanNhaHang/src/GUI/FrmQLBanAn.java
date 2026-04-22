@@ -93,7 +93,7 @@ public class FrmQLBanAn extends JPanel {
 		tblBanAn.setGridColor(new Color(235, 235, 235));
 		tblBanAn.setShowGrid(true);
 
-		// Thêm hướng dẫn người dùng dưới bảng
+
 		JLabel lblHint = new JLabel("  Nhấn đúp chuột vào một bàn để xem chi tiết");
 		lblHint.setFont(new Font("Segoe UI", Font.ITALIC, 12));
 		lblHint.setForeground(new Color(150, 150, 150));
@@ -156,7 +156,7 @@ public class FrmQLBanAn extends JPanel {
 		lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		lblTitle.setBorder(new EmptyBorder(0, 0, 8, 0));
 
-		// Panel thông tin cơ bản (3 dòng x 2 cột)
+
 		JPanel infoPanel = new JPanel(new GridLayout(3, 2, 16, 12));
 		infoPanel.setOpaque(false);
 
@@ -169,7 +169,7 @@ public class FrmQLBanAn extends JPanel {
 		infoPanel.add(createInfoItem("Vị trí:", ban.getViTri() != null ? ban.getViTri() : "-"));
 		infoPanel.add(createInfoItem("Sức chứa:", String.valueOf(ban.getSucChua())));
 
-		// Panel Mô tả ở dưới
+
 		JPanel textPanel = new JPanel(new BorderLayout(0, 6));
 		textPanel.setOpaque(false);
 		textPanel.setBorder(new EmptyBorder(12, 0, 0, 0));
@@ -182,9 +182,9 @@ public class FrmQLBanAn extends JPanel {
 		txtMoTa.setLineWrap(true);
 		txtMoTa.setWrapStyleWord(true);
 		txtMoTa.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-		// Xóa con trỏ nhấp nháy
+
 		txtMoTa.setFocusable(false);
-		// Làm trong suốt màu nền
+
 		txtMoTa.setOpaque(false);
 
 		JScrollPane scrollMoTa = new JScrollPane(txtMoTa);
@@ -341,26 +341,23 @@ public class FrmQLBanAn extends JPanel {
 
 			cboTrangThai = new JComboBox<>(new String[] { "Trống", "Có khách", "Đã đặt", "Ngưng sử dụng" });
 			if (banSua == null) {
-				// Nếu là THÊM MỚI: Khóa cứng là "Trống"
+
 				cboTrangThai.setSelectedItem("Trống");
 				cboTrangThai.setEnabled(false);
 			} else {
-				// Nếu là SỬA: Kiểm tra trạng thái hiện tại
+
 				String ttHienTai = banSua.getTrangThai();
 
 				if (ttHienTai.equals("Có khách") || ttHienTai.equals("Đã đặt")) {
-					// Bàn đang vướng nghiệp vụ của Lễ tân/Phục vụ -> Ép hiển thị đúng trạng thái đó
-					// và KHÓA không cho Quản lý sửa
+
 					cboTrangThai.removeAllItems();
 					cboTrangThai.addItem(ttHienTai);
 					cboTrangThai.setEnabled(false);
 				} else {
-					// Bàn đang Trống hoặc Ngưng sử dụng -> Quản lý được phép đóng/mở bàn
 					cboTrangThai.setSelectedItem(ttHienTai);
 					cboTrangThai.setEnabled(true);
 				}
 			}
-			// Khởi tạo ComboBox Vị Trí và Sức Chứa (cho phép nhập tay)
 			cboViTri = new JComboBox<>(new String[] { "Tầng 1", "Tầng 2", "Phòng VIP" });
 			cboViTri.setEditable(true);
 

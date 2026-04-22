@@ -62,8 +62,7 @@ public class FrmQLSoDoBan extends JPanel {
         mainCard.setBackground(Color.WHITE);
         mainCard.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(BORDER_CLR, 1, true),
-                BorderFactory.createEmptyBorder()
-        ));
+                BorderFactory.createEmptyBorder()));
 
         mainCard.add(createTabs(), BorderLayout.NORTH);
         mainCard.add(createMapArea(), BorderLayout.CENTER);
@@ -81,7 +80,7 @@ public class FrmQLSoDoBan extends JPanel {
                 BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_CLR),
                 new EmptyBorder(12, 20, 0, 20)));
 
-        String[] tabNames = {"Tầng 1", "Tầng 2", "Phòng VIP"};
+        String[] tabNames = { "Tầng 1", "Tầng 2", "Phòng VIP" };
         for (int i = 0; i < tabNames.length; i++) {
             JLabel lbl = new JLabel(tabNames[i]);
             lbl.setFont(new Font("Segoe UI", i == 0 ? Font.BOLD : Font.PLAIN, 14));
@@ -134,7 +133,7 @@ public class FrmQLSoDoBan extends JPanel {
         lblMapTitle = new JLabel("Sơ đồ bàn - " + currentTab);
         lblMapTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
 
-        JLabel sub = new JLabel("Chọn bàn để xem nhanh thông tin phục vụ / đặt chỗ");
+        JLabel sub = new JLabel("Chọn bàn để xem thông tin phục vụ / đặt chỗ");
         sub.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         sub.setForeground(TEXT_GRAY);
 
@@ -259,7 +258,8 @@ public class FrmQLSoDoBan extends JPanel {
     }
 
     public void refreshSoDoBan() {
-        if (gridMap == null) return;
+        if (gridMap == null)
+            return;
 
         gridMap.removeAll();
         if (lblMapTitle != null) {
@@ -274,8 +274,7 @@ public class FrmQLSoDoBan extends JPanel {
                         ban.getMaBan(),
                         ban.getTenBan(),
                         ban.getSucChua(),
-                        ban.getTrangThai() == null ? "" : ban.getTrangThai().trim()
-                ));
+                        ban.getTrangThai() == null ? "" : ban.getTrangThai().trim()));
             }
         }
 
@@ -289,8 +288,7 @@ public class FrmQLSoDoBan extends JPanel {
         sidebar.setPreferredSize(new Dimension(340, 0));
         sidebar.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(BORDER_CLR, 1, true),
-                BorderFactory.createEmptyBorder()
-        ));
+                BorderFactory.createEmptyBorder()));
 
         JPanel top = new JPanel();
         top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
@@ -304,12 +302,11 @@ public class FrmQLSoDoBan extends JPanel {
         JTextField txtSearch = new JTextField();
         txtSearch.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         txtSearch.setPreferredSize(new Dimension(0, 36));
-        txtSearch.setText("🔍 Tìm khách hàng / SĐT");
+        txtSearch.setText("Tìm khách hàng / SĐT");
         txtSearch.setForeground(TEXT_GRAY);
         txtSearch.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(BORDER_CLR, 1, true),
-                new EmptyBorder(0, 10, 0, 10)
-        ));
+                new EmptyBorder(0, 10, 0, 10)));
 
         JLabel subTitle = new JLabel("Danh sách chờ khách");
         subTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -336,7 +333,8 @@ public class FrmQLSoDoBan extends JPanel {
     }
 
     public void loadDanhSachDatCho() {
-        if (pnlDanhSachDatCho == null) return;
+        if (pnlDanhSachDatCho == null)
+            return;
 
         pnlDanhSachDatCho.removeAll();
         List<PhieuDatBan> danhSachPhieu = phieuDAO.getDanhSachDatChoChuaCheckIn();
@@ -350,13 +348,15 @@ public class FrmQLSoDoBan extends JPanel {
         } else {
             for (PhieuDatBan phieu : danhSachPhieu) {
                 String timeStr = sdfTime.format(phieu.getThoiGianDen());
+                String tenBanHienThi = layTenTatCaBanTheoPhieu(phieu.getMaPhieu(), phieu.getTenBan());
+
                 pnlDanhSachDatCho.add(createBookingCard(
                         phieu.getMaPhieu(),
                         phieu.getTenKhachHang(),
                         phieu.getSoDienThoai(),
                         timeStr,
                         phieu.getMaBan(),
-                        phieu.getTenBan(),
+                        tenBanHienThi,
                         phieu.getSoLuongKhach()
                 ));
                 pnlDanhSachDatCho.add(Box.createVerticalStrut(12));
@@ -368,7 +368,7 @@ public class FrmQLSoDoBan extends JPanel {
     }
 
     private JPanel createBookingCard(String maPhieu, String name, String phone, String time,
-                                     String maBan, String tenBan, int guests) {
+            String maBan, String tenBan, int guests) {
         JPanel card = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -442,6 +442,39 @@ public class FrmQLSoDoBan extends JPanel {
         }
         return null;
     }
+    private String layTenTatCaBanTheoPhieu(String maPhieu, String tenBanMacDinh) {
+        java.util.LinkedHashSet<String> dsTenBan = new java.util.LinkedHashSet<>();
+
+        try {
+            java.sql.Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
+            java.sql.PreparedStatement ps = con.prepareStatement(
+                    "SELECT b.tenBan " +
+                            "FROM ChiTietDatBan ct " +
+                            "JOIN BanAn b ON ct.maBan = b.maBan " +
+                            "WHERE ct.maPhieu = ?"
+            );
+            ps.setString(1, maPhieu);
+            java.sql.ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                String tenBan = rs.getString("tenBan");
+                if (tenBan != null && !tenBan.trim().isEmpty()) {
+                    dsTenBan.add(tenBan.trim());
+                }
+            }
+
+            rs.close();
+            ps.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (!dsTenBan.isEmpty()) {
+            return String.join(", ", dsTenBan);
+        }
+
+        return tenBanMacDinh != null ? tenBanMacDinh : "";
+    }
 
     private void hienThiThongTinBanTrong(String maBan, String tenBan, int capacity) {
         JDialog dialog = createBaseDialog("Chi tiết " + tenBan, currentTab);
@@ -464,15 +497,8 @@ public class FrmQLSoDoBan extends JPanel {
     }
 
     private void hienThiThongTinBanDaDat(String maBan, String tenBan, int capacity) {
-        List<PhieuDatBan> ds = phieuDAO.getDanhSachDatChoChuaCheckIn();
-        PhieuDatBan phieuMatch = null;
 
-        for (PhieuDatBan p : ds) {
-            if (p.getMaBan() != null && p.getMaBan().equalsIgnoreCase(maBan)) {
-                phieuMatch = p;
-                break;
-            }
-        }
+        PhieuDatBan phieuMatch = phieuDAO.getPhieuDatBanByMaBan(maBan);
 
         if (phieuMatch == null) {
             JOptionPane.showMessageDialog(this,
@@ -547,7 +573,11 @@ public class FrmQLSoDoBan extends JPanel {
 
     private void hienThiChiTietBanCoKhach(String maBan, String tenBan, int capacity) {
         String[] infoKhach = hoaDonDAO.getThongTinKhachVuaMo(maBan);
-        List<MonAnModel> dsMon = hoaDonDAO.getMonAnTheoBan(maBan, "Có khách");
+
+        String maHD = hoaDonDAO.getMaHoaDonDangPhucVuTheoBan(maBan);
+        List<MonAnModel> dsMon = (maHD != null)
+                ? hoaDonDAO.getChiTietHoaDon(maHD)
+                : new java.util.ArrayList<>();
 
         JDialog dialog = createBaseDialog("Chi tiết " + tenBan, currentTab);
 
@@ -636,7 +666,7 @@ public class FrmQLSoDoBan extends JPanel {
 
         JPanel timeFooter = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         timeFooter.setOpaque(false);
-        JLabel lbTime = new JLabel("🕒 Thời gian: " + gioVao);
+        JLabel lbTime = new JLabel("Thời gian: " + gioVao);
         lbTime.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lbTime.setForeground(TEXT_GRAY);
         timeFooter.add(lbTime);
@@ -662,8 +692,7 @@ public class FrmQLSoDoBan extends JPanel {
         top.setBackground(Color.WHITE);
         top.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_CLR),
-                new EmptyBorder(20, 24, 20, 24)
-        ));
+                new EmptyBorder(20, 24, 20, 24)));
 
         JPanel titleBox = new JPanel();
         titleBox.setOpaque(false);
@@ -681,7 +710,7 @@ public class FrmQLSoDoBan extends JPanel {
         titleBox.add(Box.createVerticalStrut(6));
         titleBox.add(lbSub);
 
-        JButton btnClose = new JButton("✕");
+        JButton btnClose = new JButton("");
         btnClose.setFocusPainted(false);
         btnClose.setBorderPainted(false);
         btnClose.setContentAreaFilled(false);
@@ -696,8 +725,7 @@ public class FrmQLSoDoBan extends JPanel {
         bottom.setBackground(Color.WHITE);
         bottom.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(1, 0, 0, 0, BORDER_CLR),
-                new EmptyBorder(12, 16, 12, 16)
-        ));
+                new EmptyBorder(12, 16, 12, 16)));
 
         JButton btnDong = new JButton("Đóng");
         btnDong.setFocusPainted(false);
@@ -731,13 +759,13 @@ public class FrmQLSoDoBan extends JPanel {
         JLabel lbTitle = new JLabel("Trạng thái");
         lbTitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lbTitle.setForeground(TEXT_GRAY);
-        lbTitle.setAlignmentX(Component.LEFT_ALIGNMENT); // Ép sát lề trái
+        lbTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JPanel pnlBadge = createStatusBadge(trangThai);
-        pnlBadge.setAlignmentX(Component.LEFT_ALIGNMENT); // Ép sát lề trái
+        pnlBadge.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         statusItem.add(lbTitle);
-        statusItem.add(Box.createVerticalStrut(4)); // Đổi thành 4px cho đều với 3 ô kia
+        statusItem.add(Box.createVerticalStrut(4));
         statusItem.add(pnlBadge);
 
         infoSection.add(statusItem);
@@ -790,17 +818,16 @@ public class FrmQLSoDoBan extends JPanel {
         panel.setBackground(new Color(249, 250, 251));
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(229, 231, 235), 1, true),
-                new EmptyBorder(12, 12, 12, 12)
-        ));
+                new EmptyBorder(12, 12, 12, 12)));
         return panel;
     }
 
     private JPanel createMonItem(String tenMon, int soLuong, long giaTien, String trangThaiMon) {
         JPanel item = createSimpleCard();
-        item.setLayout(new BorderLayout(0, 8)); // Khoảng cách dọc giữa 2 tầng
+        item.setLayout(new BorderLayout(0, 8));
         item.setBorder(new EmptyBorder(12, 16, 12, 16));
 
-        // Tầng 1: Tên món (Trái) - Thành tiền (Phải)
+
         JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
 
@@ -815,7 +842,7 @@ public class FrmQLSoDoBan extends JPanel {
         top.add(lbTen, BorderLayout.WEST);
         top.add(lbTien, BorderLayout.EAST);
 
-        // Tầng 2: Badge Trạng thái (Trái) - Số lượng (Phải)
+
         JPanel bottom = new JPanel(new BorderLayout());
         bottom.setOpaque(false);
 
@@ -905,7 +932,7 @@ public class FrmQLSoDoBan extends JPanel {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame f = new JFrame("Test - Quản Lý Sơ Đồ Bàn");
+            JFrame f = new JFrame("Quản Lý Sơ Đồ Bàn");
             f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             f.setSize(1450, 860);
             f.setLocationRelativeTo(null);

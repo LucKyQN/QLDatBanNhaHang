@@ -51,7 +51,7 @@ public class FrmTaoDatCho extends JDialog {
     private JPanel listFood;
     private List<MonAn> dsMonToanBo;
 
-    // Biến lưu JTabbedPane để làm mới Sơ đồ khi đổi giờ
+
     private JTabbedPane tabbedMap;
 
     public FrmTaoDatCho(JFrame parent) {
@@ -79,7 +79,7 @@ public class FrmTaoDatCho extends JDialog {
         JLabel title = new JLabel("Tạo đặt chỗ mới");
         title.setFont(new Font("Segoe UI", Font.BOLD, 22));
 
-        JButton btnClose = new JButton("✕");
+        JButton btnClose = new JButton("");
         btnClose.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnClose.setContentAreaFilled(false);
         btnClose.setBorderPainted(false);
@@ -101,13 +101,10 @@ public class FrmTaoDatCho extends JDialog {
         body.setBackground(Color.WHITE);
         body.setBorder(new EmptyBorder(20, 30, 20, 30));
 
-        // ========================================================
-        // PANEL BÊN TRÁI: THÔNG TIN & SƠ ĐỒ BÀN MINI
-        // ========================================================
         JPanel pnlLeft = new JPanel(new BorderLayout(0, 15));
         pnlLeft.setBackground(Color.WHITE);
 
-        // 1. Phẩn Top Bên Trái (Nhập liệu)
+
         JPanel pnlLeftTop = new JPanel();
         pnlLeftTop.setLayout(new BoxLayout(pnlLeftTop, BoxLayout.Y_AXIS));
         pnlLeftTop.setBackground(Color.WHITE);
@@ -120,11 +117,10 @@ public class FrmTaoDatCho extends JDialog {
         txtTenKhach = new JTextField();
         txtSDT = new JTextField();
 
-        // TÍNH NĂNG MỚI: Tự động điền Tên khi gõ SĐT
         txtSDT.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 String sdt = txtSDT.getText().trim();
-                if (sdt.length() >= 10) { // Bắt đầu tìm khi gõ đủ 10 số
+                if (sdt.length() >= 10) {
                     timVaDienTenKhachHang(sdt);
                 }
             }
@@ -152,9 +148,9 @@ public class FrmTaoDatCho extends JDialog {
         spinNgay.addChangeListener(timeChangeListener);
         spinGio.addChangeListener(timeChangeListener);
 
-        rowTime.add(createInputGroup("Số lượng *", txtSoLuong));
-        rowTime.add(createInputGroup("Ngày đến *", spinNgay));
-        rowTime.add(createInputGroup("Giờ đến *", spinGio));
+        rowTime.add(createInputGroup("Số lượng", txtSoLuong));
+        rowTime.add(createInputGroup("Ngày đến", spinNgay));
+        rowTime.add(createInputGroup("Giờ đến", spinGio));
         rowTime.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
         pnlLeftTop.add(rowTime);
 
@@ -162,7 +158,7 @@ public class FrmTaoDatCho extends JDialog {
         JPanel pnlMapWrap = new JPanel(new BorderLayout(0, 5));
         pnlMapWrap.setBackground(Color.WHITE);
 
-        JLabel lblMapTitle = new JLabel("Chọn bàn (Sơ đồ tự động gợi ý bàn theo giờ đặt)");
+        JLabel lblMapTitle = new JLabel("Chọn bàn");
         lblMapTitle.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         pnlMapWrap.add(lblMapTitle, BorderLayout.NORTH);
 
@@ -173,10 +169,8 @@ public class FrmTaoDatCho extends JDialog {
 
         pnlMapWrap.add(tabbedMap, BorderLayout.CENTER);
 
-        // Gọi hàm vẽ Sơ đồ bàn lần đầu
         refreshSodoMiniMap();
 
-        // 3. Phần Bottom Bên Trái (Ghi chú)
         txtNote = new JTextArea();
         txtNote.setLineWrap(true);
         txtNote.setWrapStyleWord(true);
@@ -191,9 +185,7 @@ public class FrmTaoDatCho extends JDialog {
         pnlLeft.add(pnlMapWrap, BorderLayout.CENTER);
         pnlLeft.add(pnlNoteWrap, BorderLayout.SOUTH);
 
-        // ========================================================
         // PANEL BÊN PHẢI: THỰC ĐƠN & TIỀN CỌC
-        // ========================================================
         JPanel pnlRight = new JPanel(new BorderLayout(0, 15));
         pnlRight.setBackground(Color.WHITE);
 
@@ -203,12 +195,12 @@ public class FrmTaoDatCho extends JDialog {
 
         JPanel pnlMenuHeader = new JPanel(new BorderLayout(0, 5));
         pnlMenuHeader.setBackground(Color.WHITE);
-        JLabel lblMenuTitle = new JLabel("Thực đơn (Tùy chọn)");
+        JLabel lblMenuTitle = new JLabel("Thực đơn");
         lblMenuTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
         txtTimKiemMon = new JTextField();
         txtTimKiemMon.setPreferredSize(new Dimension(0, 32));
-        txtTimKiemMon.putClientProperty("JTextField.placeholderText", "Tìm kiếm món ăn...");
+        txtTimKiemMon.putClientProperty("JTextField.placeholderText", "Tìm kiếm món ăn");
         txtTimKiemMon.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 hienThiDanhSachMon();
@@ -304,9 +296,7 @@ public class FrmTaoDatCho extends JDialog {
         return body;
     }
 
-    // ====================================================================
     // HÀM TỰ ĐỘNG TÌM TÊN KHÁCH KHI GÕ SDT
-    // ====================================================================
     private void timVaDienTenKhachHang(String sdt) {
         String sql = "SELECT tenKH FROM KhachHang WHERE soDienThoai = ?";
         try {
@@ -316,10 +306,10 @@ public class FrmTaoDatCho extends JDialog {
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 String ten = rs.getString("tenKH");
-                txtTenKhach.setText(ten); // Auto điền tên
-                txtTenKhach.setForeground(new Color(22, 163, 74)); // Chữ màu xanh báo hiệu tìm thấy
+                txtTenKhach.setText(ten);
+                txtTenKhach.setForeground(new Color(22, 163, 74));
             } else {
-                txtTenKhach.setForeground(Color.BLACK); // Không thấy thì reset màu
+                txtTenKhach.setForeground(Color.BLACK);
             }
             rs.close();
             ps.close();
@@ -328,12 +318,10 @@ public class FrmTaoDatCho extends JDialog {
         }
     }
 
-    // ====================================================================
-    // HÀM TẠO SƠ ĐỒ MINI (CÓ TÍNH TOÁN 150 PHÚT AN TOÀN CHO BÀN CÓ KHÁCH)
-    // ====================================================================
+    // HÀM TẠO SƠ ĐỒ MINI
     private void refreshSodoMiniMap() {
         tabbedMap.removeAll();
-        selectedTables.clear(); // Reset bàn đã chọn mỗi khi đổi giờ
+        selectedTables.clear();
 
         java.util.Date thoiGianDat = getThoiGianDatBan();
         long diffMinutes = (thoiGianDat.getTime() - System.currentTimeMillis()) / 60000;
@@ -358,7 +346,7 @@ public class FrmTaoDatCho extends JDialog {
                     if (status.equalsIgnoreCase("Trống")) {
                         hienThiBan = true;
                     } else if (status.equalsIgnoreCase("Có khách")) {
-                        // NẾU KHÁCH ĐẶT CÁCH HIỆN TẠI >= 150 PHÚT THÌ CHO PHÉP CHỌN BÀN ĐANG CÓ KHÁCH
+
                         if (diffMinutes >= 150) {
                             hienThiBan = true;
                             laBanSapTrong = true;
@@ -397,7 +385,7 @@ public class FrmTaoDatCho extends JDialog {
         JPanel pnlBottom = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
         pnlBottom.setOpaque(false);
 
-        JLabel lblCap = new JLabel("🪑 " + ban.getSucChua());
+        JLabel lblCap = new JLabel("" + ban.getSucChua());
         lblCap.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 11));
         lblCap.setForeground(TEXT_GRAY);
         pnlBottom.add(lblCap);
@@ -432,9 +420,7 @@ public class FrmTaoDatCho extends JDialog {
         return card;
     }
 
-    // ====================================================================
     // HÀM LẤY NGÀY GIỜ TỪ SPINNER
-    // ====================================================================
     private java.util.Date getThoiGianDatBan() {
         java.util.Date datePart = (java.util.Date) spinNgay.getValue();
         java.util.Date timePart = (java.util.Date) spinGio.getValue();
@@ -493,7 +479,7 @@ public class FrmTaoDatCho extends JDialog {
 
         content.add(createMoneyInfoRow("Phí đặt bàn:", lblPhiDatBan));
         content.add(Box.createVerticalStrut(8));
-        content.add(createMoneyInfoRow("Cọc món đặt trước (30%):", lblCocMon));
+        content.add(createMoneyInfoRow("Cọc món đặt trước:", lblCocMon));
         content.add(Box.createVerticalStrut(10));
 
         JSeparator sep = new JSeparator();

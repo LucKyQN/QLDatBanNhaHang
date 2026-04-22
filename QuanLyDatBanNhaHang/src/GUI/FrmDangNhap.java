@@ -1,4 +1,3 @@
-
 package GUI;
 
 import javax.swing.*;
@@ -39,7 +38,6 @@ public class FrmDangNhap extends JFrame {
         setContentPane(mainPanel);
     }
 
-
     private JPanel createLeftPanel() {
         BackgroundImagePanel leftPanel = new BackgroundImagePanel(BG_IMAGE_PATH);
         leftPanel.setLayout(new BorderLayout());
@@ -66,7 +64,6 @@ public class FrmDangNhap extends JFrame {
         leftPanel.add(infoPanel, BorderLayout.SOUTH);
         return leftPanel;
     }
-
 
     private JPanel createRightPanel() {
         JPanel rightPanel = new JPanel(new BorderLayout());
@@ -132,7 +129,6 @@ public class FrmDangNhap extends JFrame {
         // Cho phép nhấn Enter để đăng nhập
         getRootPane().setDefaultButton(btnDangNhap);
 
-
         centerPanel.add(pnlUserLabel);
         centerPanel.add(Box.createVerticalStrut(10));
         centerPanel.add(userField);
@@ -142,7 +138,6 @@ public class FrmDangNhap extends JFrame {
         centerPanel.add(passField);
         centerPanel.add(Box.createVerticalStrut(28));
         centerPanel.add(btnDangNhap);
-
 
         rightPanel.add(centerPanel, BorderLayout.CENTER);
         return rightPanel;
@@ -254,7 +249,7 @@ public class FrmDangNhap extends JFrame {
 
         // Disable nút tránh click nhiều lần
         btnDangNhap.setEnabled(false);
-        btnDangNhap.setText("Đang đăng nhập...");
+        btnDangNhap.setText("Đang đăng nhập");
 
         // Chạy trên background thread tránh đơ UI
         SwingWorker<NhanVien, Void> worker = new SwingWorker<>() {
@@ -286,8 +281,7 @@ public class FrmDangNhap extends JFrame {
                     Entity.LuuLog.nhanVienDangNhap = new Model.NhanVienModel(
                             nhanVien.getMaNV(),
                             nhanVien.getHoTenNV(),
-                            nhanVien.getVaiTro()
-                    );
+                            nhanVien.getVaiTro());
                     Entity.LuuLog.nhanVienDangNhap.taiKhoan = nhanVien.getTenDangNhap();
                     vaiTro = vaiTro.trim();
                     NhatKyDangNhapDAO logDAO = new NhatKyDangNhapDAO();
@@ -331,7 +325,6 @@ public class FrmDangNhap extends JFrame {
     // MAIN
     public static void main(String[] args) {
 
-
         try {
             ConnectDB.getInstance().connect();
         } catch (Exception e) {
@@ -341,7 +334,7 @@ public class FrmDangNhap extends JFrame {
     }
 }
 
-//  COMPONENTS PHỤ
+
 
 class BackgroundImagePanel extends JPanel {
     private Image backgroundImage;

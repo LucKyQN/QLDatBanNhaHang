@@ -119,7 +119,6 @@ public class FrmGoiMon extends JDialog {
 		gridFood.setBackground(BG_MAIN);
 		gridFood.setPreferredSize(new Dimension(800, 2000));
 
-		// --- KẾT NỐI DB ĐỂ LẤY MÓN ĂN THỰC TẾ ---
 		DAO.MonAnDAO monAnDAO = new DAO.MonAnDAO();
 
 		List<Entity.MonAn> danhSachMon = monAnDAO.getAllMonAn();
@@ -133,7 +132,7 @@ public class FrmGoiMon extends JDialog {
 			gridFood.add(createFoodCard(icon, mon.getMaMonAn(), mon.getTenMon(), mon.getGiaMon()));
 		}
 
-		// ⭐ bắt buộc
+
 		gridFood.revalidate();
 		gridFood.repaint();
 		JScrollPane scroll = new JScrollPane(gridFood);
@@ -173,7 +172,7 @@ public class FrmGoiMon extends JDialog {
 		lblPrice.setForeground(RED_MAIN);
 		lblPrice.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-		JButton btnAdd = new JButton("+ Thêm");
+		JButton btnAdd = new JButton("Thêm");
 		btnAdd.setBackground(RED_MAIN);
 		btnAdd.setForeground(Color.WHITE);
 		btnAdd.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -254,12 +253,10 @@ public class FrmGoiMon extends JDialog {
 		btnGuiBep.setBorderPainted(false);
 		btnGuiBep.setEnabled(false);
 
-		// --- XỬ LÝ LƯU XUỐNG CSDL ---
+		// XỬ LÝ LƯU
 		btnGuiBep.addActionListener(e -> {
 			DAO.HoaDonDAO hoaDonDAO = new DAO.HoaDonDAO();
 
-			// 1. Lấy mã hóa đơn chưa thanh toán của bàn này (Vừa được tạo lúc Lễ Tân mở
-			// bàn)
 			String maHD = hoaDonDAO.getMaHoaDonChuaThanhToanCuaBan(this.maBan);
 
 			if (maHD == null) {
@@ -268,10 +265,9 @@ public class FrmGoiMon extends JDialog {
 				return;
 			}
 
-			// 2. Duyệt qua từng dòng trong giỏ hàng để lưu vào bảng ChiTietHoaDon
 			boolean thanhCong = true;
 			for (int i = 0; i < cartModel.getRowCount(); i++) {
-				CartItem item = (CartItem) cartModel.getValueAt(i, 0); // Lấy cục CartItem chứa maMonAn
+				CartItem item = (CartItem) cartModel.getValueAt(i, 0);
 				int soLuong = (int) cartModel.getValueAt(i, 1);
 
 				String maMonAn = item.getMaMonAn();
@@ -283,10 +279,10 @@ public class FrmGoiMon extends JDialog {
 			}
 
 			if (thanhCong) {
-				JOptionPane.showMessageDialog(this, "✅ Đã gửi đơn hàng xuống bếp thành công!");
+				JOptionPane.showMessageDialog(this, "Đã gửi đơn hàng xuống bếp thành công!");
 				this.dispose();
 			} else {
-				JOptionPane.showMessageDialog(this, "❌ Lỗi: Có lỗi xảy ra khi lưu món ăn vào CSDL!", "Lỗi CSDL",
+				JOptionPane.showMessageDialog(this, "Có lỗi khi lưu món ăn vào CSDL", "Lỗi CSDL",
 						JOptionPane.ERROR_MESSAGE);
 			}
 		});
@@ -301,7 +297,6 @@ public class FrmGoiMon extends JDialog {
 		return cartArea;
 	}
 
-	// --- HÀM XỬ LÝ LOGIC GIỎ HÀNG (Thêm maMonAn) ---
 	private void addToCart(String maMon, String name, double price) {
 		boolean exists = false;
 
@@ -351,7 +346,7 @@ public class FrmGoiMon extends JDialog {
 
 		@Override
 		public String toString() {
-			return tenMonAn; // Chỉ hiển thị Tên Món trên cái bảng UI
+			return tenMonAn;
 		}
 	}
 }

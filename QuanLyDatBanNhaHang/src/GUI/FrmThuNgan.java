@@ -69,7 +69,7 @@ public class FrmThuNgan extends JFrame {
         initUI();
         taiDanhSachBan();
         Timer timer = new Timer(5000, e -> {
-            System.out.println("Đang tự động cập nhật danh sách bàn");
+            System.out.println("Đang cập nhật danh sách bàn");
             taiDanhSachBan();
         });
         timer.start();
@@ -140,7 +140,6 @@ public class FrmThuNgan extends JFrame {
         bar.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_CLR),
                 new EmptyBorder(15, 25, 15, 25)));
 
-        // --- BÊN TRÁI: LOGO & TIÊU ĐỀ (Đã xóa nút Quay lại) ---
         JPanel west = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         west.setOpaque(false);
 
@@ -201,7 +200,7 @@ public class FrmThuNgan extends JFrame {
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
         rightPanel.setOpaque(false);
         rightPanel.add(lbUser);
-        rightPanel.add(btnLichSu); // <-- Nhét nút Lịch sử vào đây
+        rightPanel.add(btnLichSu);
         rightPanel.add(btnCaiDat);
         rightPanel.add(btnLogout);
 
@@ -252,7 +251,7 @@ public class FrmThuNgan extends JFrame {
         btnTimKiem.setFocusPainted(false);
         btnTimKiem.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        JButton btnLamMoi = new JButton("Làm mới (100 đơn gần nhất)");
+        JButton btnLamMoi = new JButton("Làm mới");
         btnLamMoi.setBackground(new Color(240, 240, 240));
         btnLamMoi.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btnLamMoi.setFocusPainted(false);
@@ -293,7 +292,7 @@ public class FrmThuNgan extends JFrame {
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) { // Nhấp đúp 2 lần để xem chi tiết
+                if (e.getClickCount() == 2) {
                     int row = table.getSelectedRow();
                     if (row >= 0) {
                         String maHD = table.getValueAt(row, 0).toString();
@@ -301,16 +300,14 @@ public class FrmThuNgan extends JFrame {
                         String tenKhach = table.getValueAt(row, 2).toString();
                         String tongTien = table.getValueAt(row, 4).toString();
 
-                        // Gọi hàm hiển thị chi tiết (sẽ viết ở Bước 2)
                         hienThiChiTietHoaDonLichSu(maHD, tenBan, tenKhach, tongTien);
                     }
                 }
             }
         });
-        // --- HÀM TẢI DỮ LIỆU ---
+
         Runnable loadData = () -> {
             modelList.setRowCount(0);
-            // Truyền null để mặc định lấy 100 đơn gần nhất lúc mới mở
             List<String[]> data = dao.getLichSuHoaDonTheoNgay(null, null);
             for (String[] row : data) {
                 modelList.addRow(row);
@@ -339,12 +336,12 @@ public class FrmThuNgan extends JFrame {
         });
 
         btnLamMoi.addActionListener(e -> {
-            spinTuNgay.setValue(new java.util.Date()); // Reset lại ngày hôm nay
+            spinTuNgay.setValue(new java.util.Date());
             spinDenNgay.setValue(new java.util.Date());
             loadData.run();
         });
 
-        // Tự động load dữ liệu lần đầu khi mở cửa sổ
+
         loadData.run();
 
         dialog.add(header, BorderLayout.NORTH);
@@ -704,10 +701,10 @@ public class FrmThuNgan extends JFrame {
 
         String maKM = dsKM_Current.get(cboKM_Current.getSelectedIndex())[0];
 
-        if (dao.thanhToan(ban.maHD, soTienCanThu, tienGiamHienTai, maKM)) {
-            JOptionPane.showMessageDialog(this, "Đã lưu hóa đơn & giải phóng bàn!");
+        if (dao.thanhToan(ban.maHD, soTienCanThu, tienGiamHienTai, maKM, khachDua, tienThua)) {
+            JOptionPane.showMessageDialog(this, "Đã lưu hóa đơn và giải phóng bàn!");
 
-            int export = JOptionPane.showConfirmDialog(this, "Bạn có muốn xuất hóa đơn PDF ngay bây giờ không?",
+            int export = JOptionPane.showConfirmDialog(this, "Bạn có muốn xuất hóa đơn PDF không?",
                     "Xuất hóa đơn PDF", JOptionPane.YES_NO_OPTION);
 
             if (export == JOptionPane.YES_OPTION) {
@@ -768,7 +765,7 @@ public class FrmThuNgan extends JFrame {
         return p;
     }
 
-    // ==================== CODE XUẤT HÓA ĐƠN MỚI ====================
+
     private void xuatHoaDonPDF(BanAnModel ban, List<MonAnModel> dsMon, long khachDua, long tienThua) {
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Chọn nơi lưu hóa đơn PDF");
@@ -782,14 +779,13 @@ public class FrmThuNgan extends JFrame {
             file = new File(file.getAbsolutePath() + ".pdf");
         }
 
-        // Dùng giấy A5 nhìn giống hóa đơn nhà hàng (bill) hơn A4
         Document document = new Document(PageSize.A5, 20, 20, 30, 30);
 
         try {
             PdfWriter.getInstance(document, new FileOutputStream(file));
             document.open();
 
-            // 1. NẠP FONT ARIAL CỦA WINDOWS ĐỂ VIẾT TIẾNG VIỆT
+
             BaseFont bf = BaseFont.createFont("C:\\Windows\\Fonts\\arial.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
             com.lowagie.text.Font fontTitle = new com.lowagie.text.Font(bf, 16, com.lowagie.text.Font.BOLD);
             com.lowagie.text.Font fontBold = new com.lowagie.text.Font(bf, 11, com.lowagie.text.Font.BOLD);
@@ -912,6 +908,8 @@ public class FrmThuNgan extends JFrame {
         String thuNgan = info[2] != null ? info[2].toString() : "---";
         long tienCoc = info[3] != null ? (long) info[3] : 0;
         long tienGiam = info[4] != null ? (long) info[4] : 0;
+        long tienKhachDua = info[6] != null ? (long) info[6] : 0;
+        long tienThuaTraKhach = info[7] != null ? (long) info[7] : 0;
         String tenKM = info[5] != null ? info[5].toString() : "Không";
 
         JDialog dialog = new JDialog(this, "Chi tiết Hóa Đơn: " + maHD, true);
@@ -978,8 +976,9 @@ public class FrmThuNgan extends JFrame {
         long vat = (long) (sauGiam * 0.10);
         long tongCong = sauGiam + phiDV + vat;
 
-        long canThanhToan = Math.max(0, tongCong - tienCoc);
-        long hoanLai = Math.max(0, tienCoc - tongCong);
+        long soTienCanThu = Math.max(0, tongCong - tienCoc);
+        long soTienThucThu = Math.max(0, tienKhachDua - tienThuaTraKhach);
+        long hoanCoc = Math.max(0, tienCoc - tongCong);
 
         paper.add(createSummaryRow("Tạm tính:", new JLabel(formatTien(tamTinh) + " đ")));
         paper.add(createSummaryRow("Khuyến mãi (" + tenKM + "):", new JLabel("-" + formatTien(tienGiam) + " đ")));
@@ -996,15 +995,17 @@ public class FrmThuNgan extends JFrame {
         lbCoc.setForeground(new Color(22, 163, 74));
         paper.add(createSummaryRow("Đã cọc:", lbCoc));
 
-        // VÁ LỖI: HIỂN THỊ DÒNG TIỀN HOÀN LẠI CHO KHÁCH
-        JLabel lbHoanLai = new JLabel(formatTien(hoanLai) + " đ");
-        lbHoanLai.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        lbHoanLai.setForeground(new Color(37, 99, 235)); // Màu xanh dương cho tiền thối lại
-        paper.add(createSummaryRow("Hoàn lại khách:", lbHoanLai));
+        paper.add(createSummaryRow("Cần thanh toán:", new JLabel(formatTien(soTienCanThu) + " đ")));
+        paper.add(createSummaryRow("Khách đưa:", new JLabel(formatTien(tienKhachDua) + " đ")));
+        paper.add(createSummaryRow("Tiền thừa trả khách:", new JLabel(formatTien(tienThuaTraKhach) + " đ")));
 
-        JLabel lbDaThu = new JLabel(formatTien(canThanhToan) + " đ");
+        if (hoanCoc > 0) {
+            paper.add(createSummaryRow("Hoàn lại từ tiền cọc:", new JLabel(formatTien(hoanCoc) + " đ")));
+        }
+
+        JLabel lbDaThu = new JLabel(formatTien(soTienThucThu) + " đ");
         lbDaThu.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        paper.add(createSummaryRow("SỐ TIỀN ĐÃ THU:", lbDaThu));
+        paper.add(createSummaryRow("SỐ TIỀN THỰC THU:", lbDaThu));
 
         JScrollPane scroll = new JScrollPane(paper);
         scroll.setBorder(null);

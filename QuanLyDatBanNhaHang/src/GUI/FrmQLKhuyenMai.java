@@ -375,7 +375,7 @@ public class FrmQLKhuyenMai extends JPanel {
 		}
 	}
 
-	// ==================== CRUD ====================
+
 	private void moDialogThem() {
 		Window w = SwingUtilities.getWindowAncestor(this);
 		Frame owner = w instanceof Frame ? (Frame) w : null;
@@ -410,7 +410,7 @@ public class FrmQLKhuyenMai extends JPanel {
 		}
 	}
 
-	// ==================== HELPER ====================
+
 	private JButton createPrimaryButton(String text) {
 		JButton btn = new JButton(text);
 		btn.setBackground(RED_MAIN);
@@ -423,7 +423,7 @@ public class FrmQLKhuyenMai extends JPanel {
 		return btn;
 	}
 
-	// ==================== DIALOG THÊM/SỬA ====================
+
 	static class KhuyenMaiDialog extends JDialog {
 		private final KhuyenMaiDAO dao;
 		private final KhuyenMai kmSua;
@@ -558,7 +558,7 @@ public class FrmQLKhuyenMai extends JPanel {
 				boolean ok = kmSua == null ? dao.themKhuyenMai(km) : dao.suaKhuyenMai(km);
 				if (ok) {
 					JOptionPane.showMessageDialog(this,
-							kmSua == null ? "Tạo khuyến mãi thành công!" : "Cập nhật thành công!");
+							kmSua == null ? "Tạo khuyến mãi thành công" : "Cập nhật thành công!");
 					succeeded = true;
 					dispose();
 				} else {

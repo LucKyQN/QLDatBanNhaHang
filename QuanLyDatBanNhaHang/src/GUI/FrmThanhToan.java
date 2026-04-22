@@ -115,8 +115,8 @@ public class FrmThanhToan extends JDialog {
 		model.setRowCount(0);
 		tongTienBill = 0;
 
-		// 1. Lấy mã hóa đơn chưa thanh toán của cái bàn này thông qua DAO
-		maHDHienTai = hoaDonDAO.getMaHoaDonChuaThanhToanCuaBan(this.maBan);
+
+		maHDHienTai = hoaDonDAO.getMaHoaDonDangPhucVuTheoBan(this.maBan);
 
 		if (maHDHienTai == null) {
 			lblTotalDisplay.setText("0 đ");
@@ -125,7 +125,6 @@ public class FrmThanhToan extends JDialog {
 			return;
 		}
 
-		// 2. Lấy danh sách món ăn từ ChiTietHoaDon thông qua DAO
 		List<MonAnModel> dsMon = hoaDonDAO.getChiTietHoaDon(maHDHienTai);
 
 		for (MonAnModel mon : dsMon) {
@@ -215,21 +214,33 @@ public class FrmThanhToan extends JDialog {
 			return;
 		}
 
-		// Kiểm tra tiền khách đưa
+		double tienKhach = 0;
+		double tienThua = 0;
+
 		try {
 			String nhapVao = txtKhachDua.getText().replaceAll("[^\\d]", "");
-			double tienKhach = nhapVao.isEmpty() ? 0 : Double.parseDouble(nhapVao);
+			tienKhach = nhapVao.isEmpty() ? 0 : Double.parseDouble(nhapVao);
+
 			if (tienKhach < tongTienBill) {
 				JOptionPane.showMessageDialog(this, "Tiền khách đưa chưa đủ!", "Lưu ý", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
+
+			tienThua = tienKhach - tongTienBill;
+
 		} catch (Exception ex) {
 			JOptionPane.showMessageDialog(this, "Vui lòng nhập số tiền hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 
-
-		boolean ok = hoaDonDAO.thanhToan(maHDHienTai, tongTienBill, 0, "NONE");
+		boolean ok = hoaDonDAO.thanhToan(
+				maHDHienTai,
+				tongTienBill,
+				0,
+				"NONE",
+				tienKhach,
+				tienThua
+		);
 
 		if (ok) {
 			JOptionPane.showMessageDialog(this, "Thanh toán thành công cho hóa đơn: " + maHDHienTai);

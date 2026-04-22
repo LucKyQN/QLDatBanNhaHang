@@ -37,14 +37,14 @@ public class FrmQLKhachHang extends JPanel {
         pnlSearch.setOpaque(false);
         txtSearch = new JTextField(20);
         txtSearch.setPreferredSize(new Dimension(250, 35));
-        txtSearch.setToolTipText("Nhập tên hoặc số điện thoại...");
+        txtSearch.setToolTipText("Nhập tên hoặc số điện thoại");
 
         JButton btnSearch = new JButton("Tìm kiếm");
         btnSearch.setBackground(RED_MAIN);
         btnSearch.setForeground(Color.WHITE);
         btnSearch.addActionListener(e -> performSearch());
 
-        pnlSearch.add(new JLabel("🔍 "));
+        pnlSearch.add(new JLabel("🔍"));
         pnlSearch.add(txtSearch);
         pnlSearch.add(btnSearch);
 

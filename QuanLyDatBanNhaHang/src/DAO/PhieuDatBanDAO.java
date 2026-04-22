@@ -42,7 +42,42 @@ public class PhieuDatBanDAO {
             return false;
         }
     }
+    public PhieuDatBan getPhieuDatBanByMaBan(String maBan) {
+        PhieuDatBan phieu = null;
+        // Quét tìm mã bàn trong cả bảng PhieuDatBan (bàn đại diện) VÀ bảng ChiTietDatBan (bàn phụ)
+        String sql = "SELECT TOP 1 p.* FROM PhieuDatBan p "
+                + "LEFT JOIN ChiTietDatBan ct ON p.maPhieu = ct.maPhieu "
+                + "WHERE (p.maBan = ? OR ct.maBan = ?) "
+                + "AND p.trangThai = N'Chờ khách' "
+                + "ORDER BY p.thoiGianDen ASC";
 
+        try {
+            Connection con = getConnection();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, maBan);
+            ps.setString(2, maBan);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                phieu = new PhieuDatBan();
+                phieu.setMaPhieu(rs.getString("maPhieu"));
+                phieu.setTenKhachHang(rs.getString("tenKhachHang"));
+                phieu.setSoDienThoai(rs.getString("soDienThoai"));
+                phieu.setThoiGianDen(rs.getTimestamp("thoiGianDen"));
+                phieu.setSoLuongKhach(rs.getInt("soLuongKhach"));
+                phieu.setGhiChu(rs.getString("ghiChu"));
+                phieu.setMaBan(rs.getString("maBan")); // Bàn đại diện
+                phieu.setTienMonDatTruoc(rs.getDouble("tienMonDatTruoc"));
+                phieu.setTienCoc(rs.getDouble("tienCoc"));
+                phieu.setTrangThai(rs.getString("trangThai"));
+            }
+            rs.close();
+            ps.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return phieu;
+    }
     // 1. Lấy danh sách phiếu đang "Chờ khách" (Hôm nay)
     public java.util.List<PhieuDatBan> getDanhSachDatChoChuaCheckIn() {
         java.util.List<PhieuDatBan> list = new java.util.ArrayList<>();

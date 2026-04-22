@@ -198,7 +198,7 @@ public class FrmDashBoard extends JFrame {
         bottomPanel.setBackground(SIDEBAR_BG);
         bottomPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, BORDER_CLR));
 
-        JLabel lbLogout = new JLabel("⎋  Đăng xuất");
+        JLabel lbLogout = new JLabel("Đăng xuất");
         lbLogout.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lbLogout.setForeground(TEXT_GRAY);
         lbLogout.setCursor(new Cursor(Cursor.HAND_CURSOR));

@@ -23,10 +23,10 @@ public class FrmGopBan extends JDialog {
     private FrmLeTan parentFrm;
     private BanAnDAO banAnDAO = new BanAnDAO();
     private HoaDonDAO hoaDonDAO = new HoaDonDAO();
-    private List<BanAn> listBan; // Lưu danh sách bàn để tiện lọc
+    private List<BanAn> listBan;
 
     public FrmGopBan(FrmLeTan parent) {
-        super(parent, true); // Modal: Khóa màn hình chính khi popup này hiện lên
+        super(parent, true);
         this.parentFrm = parent;
         setUndecorated(true); 
         setSize(500, 350);    
@@ -42,7 +42,7 @@ public class FrmGopBan extends JDialog {
 
         setContentPane(root);
         
-        // Gọi hàm load dữ liệu ngay sau khi dựng giao diện xong
+
         loadData();
     }
 
@@ -51,10 +51,10 @@ public class FrmGopBan extends JDialog {
         header.setBackground(Color.WHITE);
         header.setBorder(new EmptyBorder(15, 20, 15, 20));
 
-        JLabel title = new JLabel("⛙ Gộp bàn");
+        JLabel title = new JLabel("Gộp bàn");
         title.setFont(new Font("Segoe UI", Font.BOLD, 18));
 
-        JButton btnClose = new JButton("✕");
+        JButton btnClose = new JButton("");
         btnClose.setFont(new Font("Segoe UI", Font.BOLD, 16));
         btnClose.setContentAreaFilled(false);
         btnClose.setBorderPainted(false);
@@ -81,7 +81,6 @@ public class FrmGopBan extends JDialog {
         cbBanDich = new JComboBox<>();
         cbBanDich.setBackground(Color.WHITE);
 
-        // Bắt sự kiện: Bàn nguồn thay đổi thì load lại danh sách Bàn đích để không bị trùng
         cbBanNguon.addActionListener(e -> reloadBanDich());
 
         body.add(createInputGroup("Từ bàn (Bàn bị gộp):", cbBanNguon));
@@ -96,13 +95,11 @@ public class FrmGopBan extends JDialog {
         cbBanNguon.removeAllItems();
         
         for (BanAn ban : listBan) {
-            // Chỉ hiển thị các bàn ĐANG CÓ KHÁCH
             if (ban.getTrangThai().trim().equalsIgnoreCase("Có khách")) {
                 cbBanNguon.addItem(new BanComboItem(ban.getMaBan(), ban.getTenBan()));
             }
         }
         
-        // Load danh sách bàn đích lần đầu tiên
         reloadBanDich();
     }
 
@@ -112,7 +109,6 @@ public class FrmGopBan extends JDialog {
         
         for (BanAn ban : listBan) {
             if (ban.getTrangThai().trim().equalsIgnoreCase("Có khách")) {
-                // Thêm vào combobox đích NẾU không trùng với bàn đang được chọn ở nguồn
                 if (selectedNguon != null && !ban.getMaBan().equals(selectedNguon.getMaBan())) {
                     cbBanDich.addItem(new BanComboItem(ban.getMaBan(), ban.getTenBan()));
                 }
@@ -149,11 +145,8 @@ public class FrmGopBan extends JDialog {
                 return;
             }
 
-            // ==============================================================
             // LOGIC KIỂM TRA SỨC CHỨA (CẢNH BÁO MỀM)
-            // ==============================================================
-            
-            // 1. Lấy số lượng khách hiện tại của cả 2 bàn
+
             String[] infoNguon = hoaDonDAO.getThongTinKhachVuaMo(banNguon.getMaBan());
             String[] infoDich = hoaDonDAO.getThongTinKhachVuaMo(banDich.getMaBan());
 
@@ -190,23 +183,22 @@ public class FrmGopBan extends JDialog {
                     return; // Dừng lại nếu Lễ tân bấm NO
                 }
             }
-            // ==============================================================
+
 
             int confirm = JOptionPane.showConfirmDialog(this, 
                 "Chuyển toàn bộ món ăn từ " + banNguon.getTenBan() + " sang " + banDich.getTenBan() + "?", 
                 "Xác nhận gộp", JOptionPane.YES_NO_OPTION);
 
             if (confirm == JOptionPane.YES_OPTION) {
-                // 1. Dùng HoaDonDAO để xử lý gộp hóa đơn ở CSDL
                 boolean thanhCong = hoaDonDAO.gopBan(banNguon.getMaBan(), banDich.getMaBan());
 
                 if (thanhCong) {
-                    // 2. MẸO MỚI: Đổi trạng thái bàn bị gộp thành "Đang ghép" thay vì "Trống"
+                    // MẸO MỚI: Đổi trạng thái bàn bị gộp thành "Đang ghép" thay vì "Trống"
                     banAnDAO.capNhatTrangThai(banNguon.getMaBan(), "Đang ghép");
 
-                    JOptionPane.showMessageDialog(this, "✅ Đã gộp toàn bộ món của " + banNguon.getTenBan() + " sang " + banDich.getTenBan() + " thành công!");
+                    JOptionPane.showMessageDialog(this, "Đã gộp toàn bộ món của " + banNguon.getTenBan() + " sang " + banDich.getTenBan() + " thành công!");
                     
-                    // 3. F5 lại màn hình Lễ Tân
+                    // F5 lại màn hình Lễ Tân
                     if (parentFrm != null) {
                         parentFrm.refreshSoDoBan();
                     }
@@ -214,7 +206,7 @@ public class FrmGopBan extends JDialog {
                     // 4. Đóng popup
                     this.dispose();
                 } else {
-                    JOptionPane.showMessageDialog(this, "❌ Lỗi kết nối CSDL khi gộp bàn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Lỗi kết nối CSDL khi gộp bàn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });

@@ -11,6 +11,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.util.ArrayList;
 import java.util.List;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
@@ -379,61 +380,56 @@ public class FrmLeTan extends JFrame {
 		});
 		return card;
 	}
-	// HÀM XỬ LÝ THÔNG MINH: TÍNH TOÁN THỜI GIAN AN TOÀN CHO BÀN "ĐÃ ĐẶT"
+
 	private void xuLyClickBanDaDat(String maBan, String tenBan, int capacity) {
-		List<PhieuDatBan> dsPhieu = phieuDAO.getDanhSachDatChoChuaCheckIn();
-		PhieuDatBan phieuCuaBanNay = null;
-		SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd");
-		String today = sdfDate.format(new Date());
+		PhieuDatBan phieuCuaBanNay = phieuDAO.getPhieuDatBanByMaBan(maBan);
 
-		// Tìm phiếu đặt của bàn này TRONG HÔM NAY
-		for (PhieuDatBan p : dsPhieu) {
-			if (p.getMaBan() != null && p.getMaBan().equals(maBan) && p.getThoiGianDen() != null) {
-				if (sdfDate.format(p.getThoiGianDen()).equals(today)) {
-					phieuCuaBanNay = p;
-					break;
-				}
-			}
-		}
+		if (phieuCuaBanNay != null && phieuCuaBanNay.getThoiGianDen() != null) {
+			java.text.SimpleDateFormat sdfDate = new java.text.SimpleDateFormat("yyyy-MM-dd");
+			String today = sdfDate.format(new java.util.Date());
+			String phieuDate = sdfDate.format(phieuCuaBanNay.getThoiGianDen());
 
-		if (phieuCuaBanNay != null) {
-			long gioDat = phieuCuaBanNay.getThoiGianDen().getTime();
-			long hienTai = System.currentTimeMillis();
+			// NẾU KHÁCH ĐẶT TRONG HÔM NAY
+			if (today.equals(phieuDate)) {
+				long gioDat = phieuCuaBanNay.getThoiGianDen().getTime();
+				long hienTai = System.currentTimeMillis();
 
-			long thoiGianConLai_Phut = (gioDat - hienTai) / (60 * 1000);
+				long thoiGianConLai_Phut = (gioDat - hienTai) / (60 * 1000);
 
-			if (thoiGianConLai_Phut >= 150) {
-				SimpleDateFormat sdfTime = new SimpleDateFormat("HH:mm");
-				String thoiGianDatStr = sdfTime.format(phieuCuaBanNay.getThoiGianDen());
+				if (thoiGianConLai_Phut >= 150) {
+					java.text.SimpleDateFormat sdfTime = new java.text.SimpleDateFormat("HH:mm");
+					String thoiGianDatStr = sdfTime.format(phieuCuaBanNay.getThoiGianDen());
 
-				long tieng = thoiGianConLai_Phut / 60;
-				long phut = thoiGianConLai_Phut % 60;
+					long tieng = thoiGianConLai_Phut / 60;
+					long phut = thoiGianConLai_Phut % 60;
 
-				String msg = "Bàn " + tenBan + " có khách đặt trước lúc " + thoiGianDatStr + ".\n"
-						+ "Hiện tại còn trống " + tieng + " tiếng " + phut + " phút nữa khách mới đến.\n"
-						+ "ĐỦ THỜI GIAN AN TOÀN (>= 2.5 tiếng) để đón khách vãng lai.\n\n"
-						+ "Bạn có muốn mở bàn này cho khách vãng lai ngồi tạm không?";
+					String msg = "Bàn " + tenBan + " thuộc nhóm bàn được khách đặt trước lúc " + thoiGianDatStr + ".\n"
+							+ "Hiện tại còn trống " + tieng + " tiếng " + phut + " phút nữa khách mới đến.\n"
+							+ "ĐỦ THỜI GIAN AN TOÀN (>= 2.5 tiếng) để đón khách vãng lai.\n\n"
+							+ "Bạn có muốn mở bàn này cho khách vãng lai ngồi tạm không?";
 
-				int choice = JOptionPane.showConfirmDialog(this, msg, "Mở bàn an toàn", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-				if (choice == JOptionPane.YES_OPTION) {
-					xuLyMoBan(maBan, tenBan, capacity);
+					int choice = JOptionPane.showConfirmDialog(this, msg, "Mở bàn an toàn", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+					if (choice == JOptionPane.YES_OPTION) {
+						xuLyMoBan(maBan, tenBan, capacity);
+					}
+				} else {
+					java.text.SimpleDateFormat sdfTime = new java.text.SimpleDateFormat("HH:mm");
+					String thoiGianDatStr = sdfTime.format(phieuCuaBanNay.getThoiGianDen());
+					JOptionPane.showMessageDialog(this,
+							"Bàn " + tenBan + " có khách đặt lúc " + thoiGianDatStr + ".\n"
+									+ "Chỉ còn " + thoiGianConLai_Phut + " phút nữa khách sẽ đến.\n"
+									+ "KHÔNG ĐỦ thời gian an toàn để nhận thêm khách vãng lai!",
+							"Từ chối mở bàn", JOptionPane.WARNING_MESSAGE);
 				}
 			} else {
-				SimpleDateFormat sdfTime = new SimpleDateFormat("HH:mm");
-				String thoiGianDatStr = sdfTime.format(phieuCuaBanNay.getThoiGianDen());
-				JOptionPane.showMessageDialog(this,
-						"Bàn " + tenBan + " có khách đặt lúc " + thoiGianDatStr + ".\n"
-								+ "Chỉ còn " + thoiGianConLai_Phut + " phút nữa khách sẽ đến.\n"
-								+ "KHÔNG ĐỦ thời gian an toàn để nhận thêm khách vãng lai!",
-						"Từ chối mở bàn", JOptionPane.WARNING_MESSAGE);
+				String msg = "Bàn " + tenBan + " được đặt cho ngày khác, không phải hôm nay.\nHôm nay vẫn có thể sử dụng bình thường.\nBạn có muốn mở bàn không?";
+				int choice = JOptionPane.showConfirmDialog(this, msg, "Mở bàn", JOptionPane.YES_NO_OPTION);
+				if(choice == JOptionPane.YES_OPTION) {
+					xuLyMoBan(maBan, tenBan, capacity);
+				}
 			}
 		} else {
-			// Trường hợp khách đặt cho ngày mai, thì hôm nay bàn đó Lễ tân vẫn xài vô tư
-			String msg = "Bàn " + tenBan + " được đặt cho ngày khác, không phải hôm nay.\nHôm nay vẫn có thể sử dụng bình thường.\nBạn có muốn mở bàn không?";
-			int choice = JOptionPane.showConfirmDialog(this, msg, "Mở bàn", JOptionPane.YES_NO_OPTION);
-			if(choice == JOptionPane.YES_OPTION) {
-				xuLyMoBan(maBan, tenBan, capacity);
-			}
+			JOptionPane.showMessageDialog(this, "Hệ thống đang tải dữ liệu hoặc bàn này không có phiếu hợp lệ!");
 		}
 	}
 	// Cập nhật hàm xuLyMoBan nhận thêm tham số tenBan và capacity
@@ -482,8 +478,7 @@ public class FrmLeTan extends JFrame {
 		}
 	}
 
-	// RIGHT SIDEBAR
-	// RIGHT SIDEBAR
+
 	private JPanel createRightSidebar() {
 		JPanel sidebar = new JPanel(new BorderLayout());
 		sidebar.setBackground(Color.WHITE);
@@ -504,7 +499,7 @@ public class FrmLeTan extends JFrame {
 		txtTimKiemDatCho.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
 		txtTimKiemDatCho.setPreferredSize(new Dimension(0, 35));
 		// Nếu bạn không có lớp PlaceholderTextField thì dùng setToolTipText hoặc Label
-		txtTimKiemDatCho.setToolTipText("Gõ SĐT hoặc Tên khách...");
+		txtTimKiemDatCho.setToolTipText("Gõ SĐT hoặc Tên khách");
 		txtTimKiemDatCho.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER_CLR, 1, true),
 				new EmptyBorder(0, 10, 0, 10)));
 
@@ -577,38 +572,63 @@ public class FrmLeTan extends JFrame {
 		return sidebar;
 	}
 
-	// Hàm load dữ liệu Đã được nâng cấp để ăn theo Từ khóa và Thời gian
+
 	public void loadDanhSachDatCho() {
 		if (pnlDanhSachDatCho == null)
 			return;
 		pnlDanhSachDatCho.removeAll();
 
-		// Lấy dữ liệu lọc
+
 		String tuKhoa = (txtTimKiemDatCho != null) ? txtTimKiemDatCho.getText().trim() : "";
 		String thoiGianLoc = (cboLocThoiGian != null && cboLocThoiGian.getSelectedItem() != null)
 				? cboLocThoiGian.getSelectedItem().toString()
 				: "Hôm nay";
 
-		// Tạm thời gọi hàm getDanhSachDatChoChuaCheckIn() cũ của bạn,
-		// Sau đó mình sẽ dùng Java Code để tự lọc luôn cho nhanh gọn khỏi đụng DAO!
+
 		List<PhieuDatBan> danhSachPhieuToanBo = phieuDAO.getDanhSachDatChoChuaCheckIn();
 		SimpleDateFormat sdfTime = new SimpleDateFormat("HH:mm");
 		SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd");
 
 		String todayDate = sdfDate.format(new Date());
-		String tomorrowDate = sdfDate.format(new Date(System.currentTimeMillis() + 86400000L)); // +1 ngày
+		String tomorrowDate = sdfDate.format(new Date(System.currentTimeMillis() + 86400000L));
 
 		int count = 0;
 
 		for (PhieuDatBan phieu : danhSachPhieuToanBo) {
-			// 1. LỌC TỪ KHÓA
+			String maBanDaiDien = phieu.getMaBan();
+			String tenBanHienThi = phieu.getTenBan();
+
+			try {
+				java.sql.Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
+				java.sql.PreparedStatement ps = con.prepareStatement(
+						"SELECT b.tenBan " +
+								"FROM ChiTietDatBan ct " +
+								"JOIN BanAn b ON ct.maBan = b.maBan " +
+								"WHERE ct.maPhieu = ?"
+				);
+				ps.setString(1, phieu.getMaPhieu());
+				java.sql.ResultSet rs = ps.executeQuery();
+
+				java.util.List<String> dsTenBan = new java.util.ArrayList<>();
+				while (rs.next()) {
+					dsTenBan.add(rs.getString("tenBan"));
+				}
+				rs.close();
+				ps.close();
+
+				if (!dsTenBan.isEmpty()) {
+					tenBanHienThi = String.join(", ", dsTenBan);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			boolean matchesSearch = true;
 			if (!tuKhoa.isEmpty()) {
 				matchesSearch = (phieu.getTenKhachHang() != null && phieu.getTenKhachHang().toLowerCase().contains(tuKhoa.toLowerCase())) ||
 						(phieu.getSoDienThoai() != null && phieu.getSoDienThoai().contains(tuKhoa));
 			}
 
-			// 2. LỌC THỜI GIAN
+
 			boolean matchesTime = true;
 			if (phieu.getThoiGianDen() != null) {
 				String phieuDate = sdfDate.format(phieu.getThoiGianDen());
@@ -619,7 +639,7 @@ public class FrmLeTan extends JFrame {
 				}
 			}
 
-			// Nếu thỏa cả 2 điều kiện thì vẽ ra Card
+
 			if (matchesSearch && matchesTime) {
 				String timeStr = (phieu.getThoiGianDen() != null) ? sdfTime.format(phieu.getThoiGianDen()) : "--:--";
 				pnlDanhSachDatCho.add(createBookingCard(
@@ -627,8 +647,8 @@ public class FrmLeTan extends JFrame {
 						phieu.getTenKhachHang(),
 						phieu.getSoDienThoai(),
 						timeStr,
-						phieu.getMaBan(),
-						phieu.getTenBan(),
+						maBanDaiDien,
+						tenBanHienThi,
 						phieu.getSoLuongKhach()
 				));
 				pnlDanhSachDatCho.add(Box.createVerticalStrut(15));
@@ -698,7 +718,8 @@ public class FrmLeTan extends JFrame {
 		return card;
 	}
 
-	private void xuLyCheckIn(String maPhieu, String tenKhach, String maBan, String tenBan, JPanel cardRef) {
+	// HÀM XỬ LÝ CHECK-IN
+	private void xuLyCheckIn(String maPhieu, String tenKhach, String maBanDaiDien, String tenBanDaiDien, JPanel cardRef) {
 
 		String sdtKhach = "0000000000";
 		int soLuongKhach = 1;
@@ -712,58 +733,89 @@ public class FrmLeTan extends JFrame {
 			}
 		}
 
-		// LOGIC KIỂM TRA SỨC CHỨA KHI CHECK-IN KHÁCH ĐẶT TRƯỚC
-		int capacity = 0;
-		List<BanAn> allBan = banAnDAO.getAllBanAn();
-		for (BanAn ban : allBan) {
-			if (ban.getMaBan().equals(maBan)) {
-				capacity = ban.getSucChua();
-				break;
+		// 1. LẤY DANH SÁCH TẤT CẢ CÁC BÀN THUỘC PHIẾU NÀY TỪ BẢNG ChiTietDatBan
+		List<String> danhSachMaBan = new ArrayList<>();
+		try {
+			java.sql.Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
+			java.sql.PreparedStatement ps = con.prepareStatement("SELECT maBan FROM ChiTietDatBan WHERE maPhieu = ?");
+			ps.setString(1, maPhieu);
+			java.sql.ResultSet rs = ps.executeQuery();
+			while (rs.next()) {
+				danhSachMaBan.add(rs.getString("maBan"));
 			}
+			rs.close(); ps.close();
+		} catch(Exception e) { e.printStackTrace(); }
+
+
+		if (danhSachMaBan.isEmpty()) {
+			danhSachMaBan.add(maBanDaiDien);
 		}
 
-		if (soLuongKhach > capacity) {
-			String msgCanhBao = "Bàn " + tenBan + " chỉ có sức chứa " + capacity + " người.\n" + "Khách đặt "
-					+ soLuongKhach + " người, đã vượt quá sức chứa.\n\n"
+		// 2. TÍNH TỔNG SỨC CHỨA VÀ GỘP TÊN BÀN ĐỂ HIỂN THỊ
+		int totalCapacity = 0;
+		StringBuilder tenCacBan = new StringBuilder();
+		List<BanAn> allBan = banAnDAO.getAllBanAn();
+
+		for (String idBan : danhSachMaBan) {
+			for (BanAn ban : allBan) {
+				if (ban.getMaBan().equals(idBan)) {
+					totalCapacity += ban.getSucChua();
+					tenCacBan.append(ban.getTenBan()).append(", ");
+					break;
+				}
+			}
+		}
+		String chuoiTenBan = tenCacBan.toString();
+		if (chuoiTenBan.endsWith(", ")) chuoiTenBan = chuoiTenBan.substring(0, chuoiTenBan.length() - 2);
+
+		// 3. KIỂM TRA SỨC CHỨA TỔNG
+		if (soLuongKhach > totalCapacity) {
+			String msgCanhBao = "Các bàn " + chuoiTenBan + " có tổng sức chứa " + totalCapacity + " người.\n"
+					+ "Khách đặt " + soLuongKhach + " người, đã vượt quá sức chứa.\n\n"
 					+ "Bạn có muốn tiếp tục check-in (kê thêm ghế) không?";
 
 			int choice = JOptionPane.showConfirmDialog(cardRef, msgCanhBao, "Cảnh báo vượt sức chứa",
 					JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
 			if (choice != JOptionPane.YES_OPTION) {
-				return; // Dừng lại nếu bấm NO
+				return;
 			}
 		} else {
-			// Nếu sức chứa bình thường thì hỏi xác nhận check-in như cũ
 			int check = JOptionPane.showConfirmDialog(cardRef,
-					"Check-in cho khách " + tenKhach + " vào " + tenBan + "?", "Xác nhận Check-in",
+					"Check-in cho khách " + tenKhach + " vào các bàn: " + chuoiTenBan + "?", "Xác nhận Check-in",
 					JOptionPane.YES_NO_OPTION);
 
-			if (check != JOptionPane.YES_OPTION)
-				return;
+			if (check != JOptionPane.YES_OPTION) return;
 		}
-
 
 		String maHD = "HD" + System.currentTimeMillis();
-		String maNV = (LuuLog.nhanVienDangNhap != null) ? LuuLog.nhanVienDangNhap.getMaNV() : "NV001";
+		String maNV = (Entity.LuuLog.nhanVienDangNhap != null) ? Entity.LuuLog.nhanVienDangNhap.getMaNV() : "NV001";
 
-		boolean hdOk = hoaDonDAO.taoHoaDonMoi(maHD, maNV, maBan, tenKhach, sdtKhach, soLuongKhach, maPhieu);
+		// Tạo hóa đơn gắn vào Bàn đại diện (A2)
+		boolean hdOk = hoaDonDAO.taoHoaDonMoi(maHD, maNV, maBanDaiDien, tenKhach, sdtKhach, soLuongKhach, maPhieu);
 		boolean copyMonOk = false;
 		if (hdOk) {
-			copyMonOk = hoaDonDAO.copyMonAnTuPhieuSangHoaDon(maBan, maHD);
+			copyMonOk = hoaDonDAO.copyMonAnTuPhieuSangHoaDon(maPhieu, maHD);
 		}
 
-		boolean banOk = banAnDAO.capNhatTrangThai(maBan, "Có khách");
+		boolean banOk = true;
+		for (String idBan : danhSachMaBan) {
+			if (!banAnDAO.capNhatTrangThai(idBan, "Có khách")) {
+				banOk = false;
+			}
+		}
+
 		boolean phieuOk = phieuDAO.capNhatTrangThaiPhieu(maPhieu, "Đã đến");
 
-		if (hdOk && copyMonOk && banOk && phieuOk) {
+		if (hdOk && banOk && phieuOk) {
 			JOptionPane.showMessageDialog(cardRef, "Check-in thành công cho " + tenKhach + "!\nMã HĐ: " + maHD,
 					"Thành công", JOptionPane.INFORMATION_MESSAGE);
+
 			refreshSoDoBan();
 			loadDanhSachDatCho();
 		} else {
 			JOptionPane.showMessageDialog(cardRef,
-					"Lỗi khi lưu dữ liệu Check-in!\n" + "hdOk = " + hdOk + "\n" + "copyMonOk = " + copyMonOk + "\n"
+					"Lỗi khi lưu dữ liệu Check-in!\n" + "hdOk = " + hdOk + "\n"
 							+ "banOk = " + banOk + "\n" + "phieuOk = " + phieuOk,
 					"Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
 		}
@@ -818,15 +870,13 @@ public class FrmLeTan extends JFrame {
 		if (lblMapTitle != null)
 			lblMapTitle.setText("Sơ đồ bàn - " + currentTab);
 
-		// 1. Đọc giá trị từ Bộ lọc sức chứa
 		int requiredCap = 0;
 		if (cboLocSucChua != null && cboLocSucChua.getSelectedIndex() > 0) {
 			String sel = (String) cboLocSucChua.getSelectedItem();
-			// Dùng Regex để lấy số từ chuỗi ">= 4 người"
 			requiredCap = Integer.parseInt(sel.replaceAll("[^0-9]", ""));
 		}
 
-		// 2. Lấy danh sách bàn từ DAO
+
 		List<Entity.BanAn> danhSachBan = banAnDAO.getAllBanAn();
 
 		for (Entity.BanAn ban : danhSachBan) {
@@ -835,7 +885,7 @@ public class FrmLeTan extends JFrame {
 
 				boolean showTable = true;
 
-				// 3. Logic Lọc
+
 				if (requiredCap > 0) {
 
 					if (!ban.getTrangThai().trim().equalsIgnoreCase("Trống") || ban.getSucChua() < requiredCap) {
@@ -843,7 +893,7 @@ public class FrmLeTan extends JFrame {
 					}
 				}
 
-				// 4. Nếu qua được bộ lọc thì thêm vào giao diện
+
 				if (showTable) {
 					gridMap.add(createTableCard(ban.getMaBan(), ban.getTenBan(), ban.getSucChua(),
 							ban.getTrangThai().trim()));

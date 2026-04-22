@@ -254,37 +254,57 @@ public class PhucVuServiceDb implements PhucVuService {
 		return ds;
 	}
 
-	@Override
 	public List<BanAnModel> getDanhSachBanCanPhucVu() {
-		List<BanAnModel> ds = new ArrayList<>();
+		List<BanAnModel> list = new ArrayList<>();
 
-		String sql = "SELECT b.maBan, b.tenBan, b.trangThai, h.maHD, "
-				+ "ISNULL((SELECT SUM(thanhTien) FROM ChiTietHoaDon WHERE maHD = h.maHD), 0) as TamTinh "
-				+ "FROM BanAn b " + "LEFT JOIN HoaDon h ON b.maBan = h.maBan "
-				+ "   AND h.trangThaiThanhToan IN (N'Chưa thanh toán', N'Chờ thanh toán') "
-				+ "WHERE b.trangThai IN (N'Có khách', N'Đã đặt', N'Chờ thanh toán')";
+		// UNION gom tất cả bàn chính và bàn phụ đang phục vụ
+		String sql = "SELECT hd.maHD, b.maBan, b.tenBan, hd.trangThaiThanhToan AS trangThaiHD, "
+				+ "ISNULL((SELECT SUM(soLuong * donGia) FROM ChiTietHoaDon WHERE maHD = hd.maHD), 0) AS tamTinh "
+				+ "FROM HoaDon hd JOIN BanAn b ON hd.maBan = b.maBan "
+				+ "WHERE hd.trangThaiThanhToan IN (N'Chưa thanh toán', N'Chờ thanh toán') "
+				+ "UNION "
+				+ "SELECT hd.maHD, b.maBan, b.tenBan, hd.trangThaiThanhToan AS trangThaiHD, "
+				+ "ISNULL((SELECT SUM(soLuong * donGia) FROM ChiTietHoaDon WHERE maHD = hd.maHD), 0) AS tamTinh "
+				+ "FROM HoaDon hd JOIN ChiTietDatBan ct ON hd.maPhieuDatBan = ct.maPhieu "
+				+ "JOIN BanAn b ON ct.maBan = b.maBan "
+				+ "WHERE hd.trangThaiThanhToan IN (N'Chưa thanh toán', N'Chờ thanh toán')";
 
 		try {
-			Connection con = ConnectDB.getInstance().getConnection();
-			PreparedStatement ps = con.prepareStatement(sql);
-			ResultSet rs = ps.executeQuery();
+			java.sql.Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
+			java.sql.PreparedStatement ps = con.prepareStatement(sql);
+			java.sql.ResultSet rs = ps.executeQuery();
+
+			// Gom nhóm các bàn chung 1 mã Hóa Đơn bằng Java
+			java.util.Map<String, BanAnModel> map = new java.util.LinkedHashMap<>();
 
 			while (rs.next()) {
-				BanAnModel b = new BanAnModel();
-				b.maBan = rs.getString("maBan");
-				b.tenBan = rs.getString("tenBan");
-				b.trangThai = rs.getString("trangThai");
-				b.maHD = rs.getString("maHD");
-				b.tamTinh = rs.getLong("TamTinh");
-				ds.add(b);
-			}
+				String maHD = rs.getString("maHD");
+				String maBan = rs.getString("maBan");
+				String tenBan = rs.getString("tenBan");
 
+				if (map.containsKey(maHD)) {
+					BanAnModel ban = map.get(maHD);
+					// Ghép thêm tên bàn vào (Ví dụ: Bàn B1, Bàn B2)
+					if (!ban.tenBan.contains(tenBan)) {
+						ban.tenBan += ", " + tenBan;
+					}
+				} else {
+					BanAnModel ban = new BanAnModel();
+					ban.maHD = maHD;
+					ban.maBan = maBan;
+					ban.tenBan = tenBan;
+					ban.trangThai = rs.getString("trangThaiHD");
+					ban.tamTinh = rs.getLong("tamTinh");
+					map.put(maHD, ban);
+				}
+			}
+			list.addAll(map.values());
 			rs.close();
 			ps.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return ds;
+		return list;
 	}
 
 	@Override
