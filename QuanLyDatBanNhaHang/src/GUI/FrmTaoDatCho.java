@@ -79,7 +79,7 @@ public class FrmTaoDatCho extends JDialog {
         JLabel title = new JLabel("Tạo đặt chỗ mới");
         title.setFont(new Font("Segoe UI", Font.BOLD, 22));
 
-        JButton btnClose = new JButton("");
+        JButton btnClose = new JButton("✕");
         btnClose.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnClose.setContentAreaFilled(false);
         btnClose.setBorderPainted(false);
@@ -143,7 +143,7 @@ public class FrmTaoDatCho extends JDialog {
         JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(spinGio, "HH:mm");
         spinGio.setEditor(timeEditor);
 
-        // TÍNH NĂNG MỚI: Lắng nghe sự kiện đổi giờ để Load lại sơ đồ bàn
+        // Lắng nghe sự kiện đổi giờ để Load lại sơ đồ bàn
         ChangeListener timeChangeListener = e -> refreshSodoMiniMap();
         spinNgay.addChangeListener(timeChangeListener);
         spinGio.addChangeListener(timeChangeListener);
@@ -200,7 +200,7 @@ public class FrmTaoDatCho extends JDialog {
 
         txtTimKiemMon = new JTextField();
         txtTimKiemMon.setPreferredSize(new Dimension(0, 32));
-        txtTimKiemMon.putClientProperty("JTextField.placeholderText", "Tìm kiếm món ăn");
+        txtTimKiemMon.setToolTipText("Tìm kiếm món ăn");
         txtTimKiemMon.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 hienThiDanhSachMon();
@@ -346,7 +346,6 @@ public class FrmTaoDatCho extends JDialog {
                     if (status.equalsIgnoreCase("Trống")) {
                         hienThiBan = true;
                     } else if (status.equalsIgnoreCase("Có khách")) {
-
                         if (diffMinutes >= 150) {
                             hienThiBan = true;
                             laBanSapTrong = true;
@@ -390,7 +389,6 @@ public class FrmTaoDatCho extends JDialog {
         lblCap.setForeground(TEXT_GRAY);
         pnlBottom.add(lblCap);
 
-        // Hiển thị chữ nhỏ màu đỏ để Lễ tân biết bàn này hiện đang có khách nhưng sẽ dọn kịp
         if (laBanSapTrong) {
             JLabel lblNote = new JLabel("(Sẽ trống)");
             lblNote.setFont(new Font("Segoe UI", Font.ITALIC, 10));
@@ -420,7 +418,6 @@ public class FrmTaoDatCho extends JDialog {
         return card;
     }
 
-    // HÀM LẤY NGÀY GIỜ TỪ SPINNER
     private java.util.Date getThoiGianDatBan() {
         java.util.Date datePart = (java.util.Date) spinNgay.getValue();
         java.util.Date timePart = (java.util.Date) spinGio.getValue();
@@ -626,6 +623,21 @@ public class FrmTaoDatCho extends JDialog {
                 return;
             }
 
+            // ====================================================================
+            // ĐÃ THÊM: HÀM KIỂM TRA ĐỤNG GIỜ KHI TẠO ĐẶT CHỖ MỚI
+            // ====================================================================
+            PhieuDatBanDAO phieuDAO = new PhieuDatBanDAO(); 
+            for (BanAn ban : selectedTables) {
+                if (phieuDAO.kiemTraTrungGioDatBan(ban.getMaBan(), thoiGianDen)) {
+                    JOptionPane.showMessageDialog(this,
+                        "Bàn [" + ban.getTenBan() + "] đã có khách đặt trong khung giờ này (Cách nhau chưa tới 2.5 tiếng).\n"
+                      + "Vui lòng chọn bàn khác hoặc thay đổi giờ đến!",
+                        "Lỗi đụng giờ", JOptionPane.ERROR_MESSAGE);
+                    return; // Ngăn chặn lưu vào CSDL
+                }
+            }
+            // ====================================================================
+
             double tienMonDatTruoc = tongTien;
             double tienCoc = PHI_DAT_BAN_CO_DINH + Math.round(tongTien * 0.3);
 
@@ -643,7 +655,6 @@ public class FrmTaoDatCho extends JDialog {
             phieu.setTienMonDatTruoc(tienMonDatTruoc);
             phieu.setTienCoc(tienCoc);
 
-            PhieuDatBanDAO phieuDAO = new PhieuDatBanDAO();
             BanAnDAO banDAO = new BanAnDAO();
             DonDatMonDAO donDAO = new DonDatMonDAO();
 

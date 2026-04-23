@@ -12,10 +12,10 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Date;
 import java.util.List;
+
+// Thư viện PDF
 import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
 import com.lowagie.text.Element;
-import com.lowagie.text.FontFactory;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
@@ -23,6 +23,15 @@ import com.lowagie.text.pdf.BaseFont;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
+
+// Thư viện Excel (Apache POI)
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+// Thư viện JCalendar
+import com.toedter.calendar.JDateChooser;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -45,20 +54,24 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 	private PieChartPanel pieChart;
 	// Table
 	private DefaultTableModel tblModel;
-	// Period combo
+	
+	// CÁC THÀNH PHẦN LỌC
 	private JComboBox<String> cboPeriod;
+	private JDateChooser dateTuNgay;
+	private JDateChooser dateDenNgay;
+	private JButton btnLoc;
+
+	// Lưu trữ dữ liệu hiện tại để xuất file
 	private long currentTongDT;
 	private int currentSoDon;
 	private int currentSoKH;
 	private long currentGiaTB;
-
 	private List<long[]> currentChartData = new ArrayList<>();
 	private List<String[]> currentTopMon = new ArrayList<>();
 	private List<String[]> currentPhanBo = new ArrayList<>();
 
 	public FrmBaoCaoDoanhThu(String tenNhanVien) {
 		this.tenNhanVien = tenNhanVien;
-
 		initUI();
 		loadData();
 	}
@@ -88,35 +101,99 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 		add(scroll, BorderLayout.CENTER);
 	}
 
-	// HEADER
+	// ====================================================================
+	// 1. THANH CÔNG CỤ (HEADER): TÙY CHỈNH TỪ NGÀY - ĐẾN NGÀY VÀ XUẤT FILE
+	// ====================================================================
 	private JPanel createTopActions() {
 		JPanel p = new JPanel(new BorderLayout());
 		p.setOpaque(false);
 
-		cboPeriod = new JComboBox<>(new String[] { "7 ngày qua", "30 ngày qua", "Tháng này", "Năm nay" });
+		// Bên trái: Bộ lọc thời gian
+		JPanel leftBox = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+		leftBox.setOpaque(false);
+
+		JLabel lbKieuLoc = new JLabel("Lọc theo:");
+		lbKieuLoc.setFont(new Font("Segoe UI", Font.BOLD, 13));
+
+		cboPeriod = new JComboBox<>(new String[] { "7 ngày qua", "30 ngày qua", "Tháng này", "Tùy chỉnh..." });
 		cboPeriod.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-		cboPeriod.addActionListener(e -> loadData());
+		cboPeriod.setPreferredSize(new Dimension(120, 32));
 
-		JButton btnXuat = new JButton("Xuất báo cáo");
-		btnXuat.setBackground(RED_MAIN);
-		btnXuat.setForeground(Color.WHITE);
-		btnXuat.setFont(new Font("Segoe UI", Font.BOLD, 13));
-		btnXuat.setFocusPainted(false);
-		btnXuat.setBorderPainted(false);
-		btnXuat.setBorder(new EmptyBorder(9, 16, 9, 16));
-		btnXuat.setCursor(new Cursor(Cursor.HAND_CURSOR));
-		btnXuat.addActionListener(e -> xuatBaoCaoPDF());
+		JLabel lbTuNgay = new JLabel("Từ:");
+		lbTuNgay.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		dateTuNgay = new JDateChooser();
+		dateTuNgay.setDateFormatString("dd/MM/yyyy");
+		dateTuNgay.setPreferredSize(new Dimension(130, 32));
+		dateTuNgay.setEnabled(false); // Mặc định khóa
 
+		JLabel lbDenNgay = new JLabel("Đến:");
+		lbDenNgay.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		dateDenNgay = new JDateChooser();
+		dateDenNgay.setDateFormatString("dd/MM/yyyy");
+		dateDenNgay.setPreferredSize(new Dimension(130, 32));
+		dateDenNgay.setEnabled(false); // Mặc định khóa
+
+		btnLoc = new JButton("Lọc dữ liệu");
+		btnLoc.setBackground(new Color(59, 130, 246));
+		btnLoc.setForeground(Color.WHITE);
+		btnLoc.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		btnLoc.setFocusPainted(false);
+		btnLoc.setPreferredSize(new Dimension(100, 32));
+		btnLoc.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+		// Bắt sự kiện khi chọn "Tùy chỉnh..." thì mới mở khóa JDateChooser
+		cboPeriod.addActionListener(e -> {
+			boolean isCustom = cboPeriod.getSelectedIndex() == 3;
+			dateTuNgay.setEnabled(isCustom);
+			dateDenNgay.setEnabled(isCustom);
+			if (!isCustom) {
+				loadData(); // Tự động lọc luôn nếu chọn các mốc có sẵn
+			}
+		});
+
+		btnLoc.addActionListener(e -> loadData());
+
+		leftBox.add(lbKieuLoc);
+		leftBox.add(cboPeriod);
+		leftBox.add(lbTuNgay);
+		leftBox.add(dateTuNgay);
+		leftBox.add(lbDenNgay);
+		leftBox.add(dateDenNgay);
+		leftBox.add(btnLoc);
+
+		// Bên phải: Các nút Xuất file
 		JPanel rightBox = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
 		rightBox.setOpaque(false);
-		rightBox.add(cboPeriod);
-		rightBox.add(btnXuat);
 
+		JButton btnXuatPDF = new JButton("Xuất PDF");
+		btnXuatPDF.setBackground(RED_MAIN);
+		btnXuatPDF.setForeground(Color.WHITE);
+		btnXuatPDF.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		btnXuatPDF.setFocusPainted(false);
+		btnXuatPDF.setPreferredSize(new Dimension(110, 32));
+		btnXuatPDF.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnXuatPDF.addActionListener(e -> xuatBaoCaoPDF());
+
+		JButton btnXuatExcel = new JButton("Xuất Excel");
+		btnXuatExcel.setBackground(new Color(22, 163, 74)); // Màu xanh lá
+		btnXuatExcel.setForeground(Color.WHITE);
+		btnXuatExcel.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		btnXuatExcel.setFocusPainted(false);
+		btnXuatExcel.setPreferredSize(new Dimension(110, 32));
+		btnXuatExcel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnXuatExcel.addActionListener(e -> xuatBaoCaoExcel());
+
+		rightBox.add(btnXuatPDF);
+		rightBox.add(btnXuatExcel);
+
+		p.add(leftBox, BorderLayout.WEST);
 		p.add(rightBox, BorderLayout.EAST);
 		return p;
 	}
 
-	// STAT CARDS
+	// ====================================================================
+	// 2. GIAO DIỆN (Giữ nguyên như thiết kế của bạn)
+	// ====================================================================
 	private JPanel createStatCards() {
 		JPanel row = new JPanel(new GridLayout(1, 4, 14, 0));
 		row.setOpaque(false);
@@ -187,13 +264,11 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 		return card;
 	}
 
-	// CHARTS ROW
 	private JPanel createChartsRow() {
 		JPanel row = new JPanel(new GridLayout(1, 2, 14, 0));
 		row.setOpaque(false);
 		row.setPreferredSize(new Dimension(0, 320));
 
-		// Line chart card
 		JPanel lineCard = new JPanel(new BorderLayout());
 		lineCard.setBackground(Color.WHITE);
 		lineCard.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER_CLR, 1, true),
@@ -205,7 +280,6 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 		lineCard.add(lbLC, BorderLayout.NORTH);
 		lineCard.add(lineChart, BorderLayout.CENTER);
 
-		// Pie chart card
 		JPanel pieCard = new JPanel(new BorderLayout());
 		pieCard.setBackground(Color.WHITE);
 		pieCard.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER_CLR, 1, true),
@@ -222,7 +296,6 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 		return row;
 	}
 
-	// BOTTOM TABLE
 	private JPanel createBottomTable() {
 		JPanel card = new JPanel(new BorderLayout(0, 12));
 		card.setBackground(Color.WHITE);
@@ -280,15 +353,275 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 		return card;
 	}
 
-	private String getTenKyBaoCao() {
-		return switch (cboPeriod.getSelectedIndex()) {
-		case 0 -> "7_ngay_qua";
-		case 1 -> "30_ngay_qua";
-		case 2 -> "thang_nay";
-		default -> "nam_nay";
-		};
+	// ====================================================================
+	// 3. LOGIC XỬ LÝ (TÍNH TOÁN NGÀY THÁNG ĐỘNG ĐỂ LOAD DATA)
+	// ====================================================================
+	
+	// Hàm lấy điều kiện WHERE cho câu SQL (tùy thuộc vào việc chọn Cbo hay chọn Ngày)
+	private String getSqlDateCondition() {
+		int index = cboPeriod.getSelectedIndex();
+		if (index == 0) return "ngayGioThanhToan >= DATEADD(DAY, -7, CAST(GETDATE() AS DATE))";
+		if (index == 1) return "ngayGioThanhToan >= DATEADD(DAY, -30, CAST(GETDATE() AS DATE))";
+		if (index == 2) {
+			// Tháng này (Từ mùng 1 đầu tháng đến nay)
+			return "MONTH(ngayGioThanhToan) = MONTH(GETDATE()) AND YEAR(ngayGioThanhToan) = YEAR(GETDATE())";
+		}
+		if (index == 3) {
+			// Tùy chỉnh (Dùng param ?)
+			return "CAST(ngayGioThanhToan AS DATE) >= ? AND CAST(ngayGioThanhToan AS DATE) <= ?";
+		}
+		return "1=1"; // Phòng hờ
 	}
 
+	// Đưa tham số vào PreparedStatement
+	private void setDateParameters(PreparedStatement ps, int paramStartIndex) throws SQLException {
+		if (cboPeriod.getSelectedIndex() == 3) {
+			Date tNgay = dateTuNgay.getDate();
+			Date dNgay = dateDenNgay.getDate();
+			
+			if(tNgay == null) tNgay = new Date();
+			if(dNgay == null) dNgay = new Date();
+
+			ps.setDate(paramStartIndex, new java.sql.Date(tNgay.getTime()));
+			ps.setDate(paramStartIndex + 1, new java.sql.Date(dNgay.getTime()));
+		}
+	}
+
+	private void loadData() {
+		// Kiểm tra logic nếu chọn tùy chỉnh
+		if (cboPeriod.getSelectedIndex() == 3) {
+			if (dateTuNgay.getDate() == null || dateDenNgay.getDate() == null) {
+				JOptionPane.showMessageDialog(this, "Vui lòng chọn đầy đủ 'Từ ngày' và 'Đến ngày'!");
+				return;
+			}
+			if (dateTuNgay.getDate().after(dateDenNgay.getDate())) {
+				JOptionPane.showMessageDialog(this, "'Từ ngày' không được lớn hơn 'Đến ngày'!");
+				return;
+			}
+		}
+
+		SwingWorker<Void, Void> w = new SwingWorker<>() {
+			long tongDT;
+			int soDon, soKH;
+			long giaTB;
+			List<long[]> chartData = new ArrayList<>();
+			List<String[]> topMon = new ArrayList<>();
+			List<String[]> phanBo = new ArrayList<>();
+
+			@Override
+			protected Void doInBackground() {
+				try {
+					Connection con = ConnectDB.getInstance().getConnection();
+					String dateCondition = getSqlDateCondition();
+
+					// 1. Tổng doanh thu
+					String sqlDT = "SELECT ISNULL(SUM(tongTien),0) FROM HoaDon WHERE trangThaiThanhToan=N'Đã thanh toán' AND " + dateCondition;
+					PreparedStatement ps = con.prepareStatement(sqlDT);
+					setDateParameters(ps, 1);
+					ResultSet rs = ps.executeQuery();
+					tongDT = rs.next() ? (long) rs.getDouble(1) : 0;
+					rs.close(); ps.close();
+
+					// 2. Số đơn
+					String sqlDon = "SELECT COUNT(*) FROM HoaDon WHERE trangThaiThanhToan=N'Đã thanh toán' AND " + dateCondition;
+					ps = con.prepareStatement(sqlDon);
+					setDateParameters(ps, 1);
+					rs = ps.executeQuery();
+					soDon = rs.next() ? rs.getInt(1) : 0;
+					rs.close(); ps.close();
+					
+					giaTB = soDon > 0 ? tongDT / soDon : 0;
+
+					// 3. Khách hàng
+					String sqlKH = "SELECT COUNT(DISTINCT ISNULL(tenKhachLe,'?')) FROM HoaDon WHERE trangThaiThanhToan=N'Đã thanh toán' AND " + dateCondition;
+					ps = con.prepareStatement(sqlKH);
+					setDateParameters(ps, 1);
+					rs = ps.executeQuery();
+					soKH = rs.next() ? rs.getInt(1) : 0;
+					rs.close(); ps.close();
+
+					// 4. Line chart
+					String sqlLine = "SELECT CAST(ngayGioThanhToan AS DATE) as ngay, ISNULL(SUM(tongTien),0) as dt "
+							+ "FROM HoaDon WHERE trangThaiThanhToan=N'Đã thanh toán' AND " + dateCondition
+							+ " GROUP BY CAST(ngayGioThanhToan AS DATE) ORDER BY ngay";
+					ps = con.prepareStatement(sqlLine);
+					setDateParameters(ps, 1);
+					rs = ps.executeQuery();
+					while (rs.next())
+						chartData.add(new long[] { rs.getDate("ngay").getTime(), (long) rs.getDouble("dt") });
+					rs.close(); ps.close();
+
+					// 5. Top món bán chạy
+					String sqlTop = "SELECT TOP 10 m.tenMonAn, dm.tenDM, SUM(c.soLuong) as sl, SUM(c.thanhTien) as dt "
+							+ "FROM ChiTietHoaDon c JOIN MonAn m ON c.maMonAn=m.maMonAn "
+							+ "JOIN DanhMucMonAn dm ON m.maDM=dm.maDM JOIN HoaDon h ON c.maHD=h.maHD "
+							+ "WHERE h.trangThaiThanhToan=N'Đã thanh toán' AND " + dateCondition.replace("ngayGioThanhToan", "h.ngayGioThanhToan")
+							+ " GROUP BY m.tenMonAn, dm.tenDM ORDER BY sl DESC";
+					ps = con.prepareStatement(sqlTop);
+					setDateParameters(ps, 1);
+					rs = ps.executeQuery();
+					while (rs.next())
+						topMon.add(new String[] { rs.getString("tenMonAn"), rs.getString("tenDM"),
+								String.valueOf(rs.getInt("sl")),
+								String.format("%,.0fđ", rs.getDouble("dt")).replace(",", "."), "" });
+					rs.close(); ps.close();
+
+					// 6. Phân bố danh mục
+					String sqlPie = "SELECT dm.tenDM, SUM(c.thanhTien) as dt "
+							+ "FROM ChiTietHoaDon c JOIN MonAn m ON c.maMonAn=m.maMonAn "
+							+ "JOIN DanhMucMonAn dm ON m.maDM=dm.maDM JOIN HoaDon h ON c.maHD=h.maHD "
+							+ "WHERE h.trangThaiThanhToan=N'Đã thanh toán' AND " + dateCondition.replace("ngayGioThanhToan", "h.ngayGioThanhToan")
+							+ " GROUP BY dm.tenDM ORDER BY dt DESC";
+					ps = con.prepareStatement(sqlPie);
+					setDateParameters(ps, 1);
+					rs = ps.executeQuery();
+					while (rs.next())
+						phanBo.add(new String[] { rs.getString("tenDM"), String.valueOf((long) rs.getDouble("dt")) });
+					rs.close(); ps.close();
+
+					// Tính % cho topMon
+					if (!topMon.isEmpty() && tongDT > 0) {
+						for (String[] row : topMon) {
+							long dt = Long.parseLong(row[3].replaceAll("[^0-9]", ""));
+							row[4] = String.format("%.1f%%", (double) dt / tongDT * 100);
+						}
+					}
+
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				return null;
+			}
+
+			@Override
+			protected void done() {
+				lbTongDT.setText(tongDT == 0 ? "0đ" : String.format("%,.0fđ", (double) tongDT).replace(",", "."));
+				lbSoDon.setText(String.valueOf(soDon));
+				lbGiaTBDon.setText(giaTB == 0 ? "0đ" : String.format("%,.0fđ", (double) giaTB).replace(",", "."));
+				lbKhachHang.setText(String.valueOf(soKH));
+
+				lineChart.setData(chartData);
+				pieChart.setData(phanBo);
+
+				tblModel.setRowCount(0);
+				for (String[] r : topMon)
+					tblModel.addRow(r);
+					
+				currentTongDT = tongDT;
+				currentSoDon = soDon;
+				currentSoKH = soKH;
+				currentGiaTB = giaTB;
+				currentChartData = new ArrayList<>(chartData);
+				currentTopMon = new ArrayList<>(topMon);
+				currentPhanBo = new ArrayList<>(phanBo);
+			}
+		};
+		w.execute();
+	}
+
+	// ====================================================================
+	// 4. XUẤT EXCEL BÁO CÁO (Sử dụng Apache POI)
+	// ====================================================================
+	private void xuatBaoCaoExcel() {
+		if (currentTopMon == null || currentTopMon.isEmpty()) {
+			JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất Excel.");
+			return;
+		}
+
+		JFileChooser chooser = new JFileChooser();
+		chooser.setDialogTitle("Chọn nơi lưu báo cáo Excel");
+		
+		// Đặt tên mặc định tùy theo bộ lọc
+		String tenKy = cboPeriod.getSelectedItem().toString().replace(" ", "_");
+		if(cboPeriod.getSelectedIndex() == 3) tenKy = "Tuy_Chinh";
+		chooser.setSelectedFile(new File("Bao_Cao_Doanh_Thu_" + tenKy + ".xlsx"));
+
+		int result = chooser.showSaveDialog(this);
+		if (result == JFileChooser.APPROVE_OPTION) {
+			File file = chooser.getSelectedFile();
+			if (!file.getName().toLowerCase().endsWith(".xlsx")) {
+				file = new File(file.getAbsolutePath() + ".xlsx");
+			}
+
+			try (Workbook workbook = new XSSFWorkbook(); FileOutputStream out = new FileOutputStream(file)) {
+				Sheet sheet = workbook.createSheet("Bao Cao Doanh Thu");
+
+				// Header File
+				Row r0 = sheet.createRow(0);
+				r0.createCell(0).setCellValue("BÁO CÁO DOANH THU NHÀ HÀNG NGÓI ĐỎ");
+				
+				Row r1 = sheet.createRow(1);
+				r1.createCell(0).setCellValue("Kỳ báo cáo: " + cboPeriod.getSelectedItem());
+				
+				Row r2 = sheet.createRow(2);
+				r2.createCell(0).setCellValue("Ngày xuất: " + new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date()));
+				
+				Row r3 = sheet.createRow(3);
+				r3.createCell(0).setCellValue("Nhân viên xuất: " + tenNhanVien);
+
+				// Khoảng trống
+				sheet.createRow(4);
+
+				// 1. Thống kê tổng quan
+				Row r5 = sheet.createRow(5);
+				r5.createCell(0).setCellValue("1. THỐNG KÊ TỔNG QUAN");
+				Row r6 = sheet.createRow(6);
+				r6.createCell(0).setCellValue("Tổng doanh thu");
+				r6.createCell(1).setCellValue("Số đơn hàng");
+				r6.createCell(2).setCellValue("Giá trị TB/Đơn");
+				r6.createCell(3).setCellValue("Số lượng khách");
+				
+				Row r7 = sheet.createRow(7);
+				r7.createCell(0).setCellValue(currentTongDT);
+				r7.createCell(1).setCellValue(currentSoDon);
+				r7.createCell(2).setCellValue(currentGiaTB);
+				r7.createCell(3).setCellValue(currentSoKH);
+				
+				sheet.createRow(8);
+
+				// 2. Bảng xếp hạng món ăn
+				Row r9 = sheet.createRow(9);
+				r9.createCell(0).setCellValue("2. TOP MÓN ĂN BÁN CHẠY");
+				
+				Row r10 = sheet.createRow(10);
+				r10.createCell(0).setCellValue("Tên món");
+				r10.createCell(1).setCellValue("Danh mục");
+				r10.createCell(2).setCellValue("Số lượng bán");
+				r10.createCell(3).setCellValue("Doanh thu");
+				r10.createCell(4).setCellValue("% Tổng ĐT");
+
+				int rowNum = 11;
+				for (String[] mon : currentTopMon) {
+					Row row = sheet.createRow(rowNum++);
+					row.createCell(0).setCellValue(mon[0]);
+					row.createCell(1).setCellValue(mon[1]);
+					row.createCell(2).setCellValue(Integer.parseInt(mon[2]));
+					// Loại bỏ chữ 'đ' và dấu '.' để Excel hiểu là số
+					long dt = Long.parseLong(mon[3].replace("đ", "").replace(".", ""));
+					row.createCell(3).setCellValue(dt);
+					row.createCell(4).setCellValue(mon[4]);
+				}
+
+				// Tự động chỉnh độ rộng cột
+				for (int i = 0; i <= 4; i++) {
+					sheet.autoSizeColumn(i);
+				}
+
+				workbook.write(out);
+				JOptionPane.showMessageDialog(this, "Xuất báo cáo Excel thành công!\n" + file.getAbsolutePath(), "Thành công", JOptionPane.INFORMATION_MESSAGE);
+				java.awt.Desktop.getDesktop().open(file); // Tự động mở file
+
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				JOptionPane.showMessageDialog(this, "Lỗi xuất file Excel: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+			}
+		}
+	}
+
+
+	// ====================================================================
+	// 5. XUẤT PDF (Giữ nguyên như cũ của bạn, chỉ update tên kỳ xuất)
+	// ====================================================================
 	private String formatTienPDF(long soTien) {
 		return String.format("%,d", soTien).replace(",", ".");
 	}
@@ -307,14 +640,16 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 	}
 
 	private void xuatBaoCaoPDF() {
-		if (currentTopMon == null) {
+		if (currentTopMon == null || currentTopMon.isEmpty()) {
 			JOptionPane.showMessageDialog(this, "Chưa có dữ liệu để xuất.");
 			return;
 		}
 
 		JFileChooser chooser = new JFileChooser();
 		chooser.setDialogTitle("Chọn nơi lưu báo cáo PDF");
-		chooser.setSelectedFile(new File("bao_cao_doanh_thu_" + getTenKyBaoCao() + ".pdf"));
+		String tenKy = cboPeriod.getSelectedItem().toString().replace(" ", "_");
+		if(cboPeriod.getSelectedIndex() == 3) tenKy = "Tuy_Chinh";
+		chooser.setSelectedFile(new File("bao_cao_doanh_thu_" + tenKy + ".pdf"));
 
 		int result = chooser.showSaveDialog(this);
 		if (result != JFileChooser.APPROVE_OPTION) {
@@ -337,18 +672,24 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 			com.lowagie.text.Font fontBold = taoFontUnicode(12, com.lowagie.text.Font.BOLD);
 			com.lowagie.text.Font fontNormal = taoFontUnicode(11, com.lowagie.text.Font.NORMAL);
 
-			// --- HEADER BÁO CÁO ---
 			Paragraph title = new Paragraph("BÁO CÁO DOANH THU NHÀ HÀNG NGÓI ĐỎ", fontTitle);
 			title.setAlignment(Element.ALIGN_CENTER);
 			document.add(title);
 
 			document.add(new Paragraph("Kỳ báo cáo: " + cboPeriod.getSelectedItem(), fontSub));
+			
+			// Hiện thêm từ ngày - đến ngày nếu chọn Tùy chỉnh
+			if(cboPeriod.getSelectedIndex() == 3) {
+				SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+				String tgText = "Từ: " + sdf.format(dateTuNgay.getDate()) + " - Đến: " + sdf.format(dateDenNgay.getDate());
+				document.add(new Paragraph(tgText, fontSub));
+			}
+			
 			document.add(new Paragraph("Ngày xuất báo cáo: " + new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date()), fontSub));
 			document.add(new Paragraph("Người xuất: " + tenNhanVien, fontSub));
 			document.add(new Paragraph("---------------------------------------------------------------------------------------------------------", fontNormal));
 			document.add(new Paragraph(" "));
 
-			// --- PHẦN 1: THỐNG KÊ TỔNG QUAN ---
 			document.add(new Paragraph("1. THỐNG KÊ TỔNG QUAN KINH DOANH", fontBold));
 			document.add(new Paragraph(" "));
 
@@ -366,7 +707,6 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 			document.add(tTongQuan);
 			document.add(new Paragraph(" "));
 
-			// --- PHẦN 2: CHỤP ẢNH BIỂU ĐỒ ---
 			document.add(new Paragraph("2. BIỂU ĐỒ TRỰC QUAN", fontBold));
 			document.add(new Paragraph(" "));
 
@@ -375,7 +715,6 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 			tChart.setWidths(new float[]{1f, 1f});
 
 			try {
-				// Chụp ảnh Line Chart
 				int wLine = lineChart.getWidth();
 				int hLine = lineChart.getHeight();
 				java.awt.image.BufferedImage imgLine = new java.awt.image.BufferedImage(wLine, hLine, java.awt.image.BufferedImage.TYPE_INT_RGB);
@@ -384,7 +723,6 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 				gLine.dispose();
 				com.lowagie.text.Image pdfImgLine = com.lowagie.text.Image.getInstance(imgLine, null);
 
-				// Chụp ảnh Pie Chart
 				int wPie = pieChart.getWidth();
 				int hPie = pieChart.getHeight();
 				java.awt.image.BufferedImage imgPie = new java.awt.image.BufferedImage(wPie, hPie, java.awt.image.BufferedImage.TYPE_INT_RGB);
@@ -393,7 +731,6 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 				gPie.dispose();
 				com.lowagie.text.Image pdfImgPie = com.lowagie.text.Image.getInstance(imgPie, null);
 
-				// Gắn ảnh vào bảng (để 2 ảnh nằm ngang nhau)
 				PdfPCell cellLine = new PdfPCell(pdfImgLine, true);
 				cellLine.setBorder(com.lowagie.text.Rectangle.NO_BORDER);
 				cellLine.setPadding(5);
@@ -410,7 +747,6 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 			}
 			document.add(new Paragraph(" "));
 
-			// --- PHẦN 3: CHI TIẾT DANH MỤC ---
 			document.add(new Paragraph("3. PHÂN BỐ DOANH THU THEO DANH MỤC", fontBold));
 			if (currentPhanBo.isEmpty()) {
 				document.add(new Paragraph("Chưa có dữ liệu.", fontNormal));
@@ -421,7 +757,6 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 			}
 			document.add(new Paragraph(" "));
 
-			// --- PHẦN 4: TOP MÓN BÁN CHẠY (Chuyển sang trang mới nếu cần) ---
 			document.add(new Paragraph("4. BẢNG XẾP HẠNG TOP MÓN ĂN BÁN CHẠY NHẤT", fontBold));
 			document.add(new Paragraph(" "));
 
@@ -451,7 +786,6 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 
 			document.add(table);
 
-			// --- KẾT THÚC ---
 			document.add(new Paragraph("\n"));
 			Paragraph signature = new Paragraph("Người lập báo cáo\n\n\n(Ký và ghi rõ họ tên)", fontNormal);
 			signature.setAlignment(Element.ALIGN_RIGHT);
@@ -462,7 +796,6 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 			JOptionPane.showMessageDialog(this, "Xuất báo cáo PDF thành công!\nFile: " + file.getAbsolutePath(),
 					"Thành công", JOptionPane.INFORMATION_MESSAGE);
 
-			// Tự động mở file sau khi xuất
 			java.awt.Desktop.getDesktop().open(file);
 
 		} catch (Exception ex) {
@@ -476,150 +809,10 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 		}
 	}
 
-	// LOAD DATA FROM DB
-	private void loadData() {
-		SwingWorker<Void, Void> w = new SwingWorker<>() {
-			long tongDT;
-			int soDon, soKH;
-			long giaTB;
-			List<long[]> chartData = new ArrayList<>();
-			List<String[]> topMon = new ArrayList<>();
-			List<String[]> phanBo = new ArrayList<>();
 
-			@Override
-			protected Void doInBackground() {
-				try {
-					Connection con = ConnectDB.getInstance().getConnection();
-					int days = switch (cboPeriod.getSelectedIndex()) {
-					case 0 -> 7;
-					case 1 -> 30;
-					case 2 -> 30;
-					default -> 365;
-					};
-
-					// Tổng doanh thu
-					String sqlDT = "SELECT ISNULL(SUM(tongTien),0) FROM HoaDon "
-							+ "WHERE trangThaiThanhToan=N'Đã thanh toán' "
-							+ "AND ngayGioThanhToan >= DATEADD(DAY,-?,CAST(GETDATE() AS DATE))";
-					PreparedStatement ps = con.prepareStatement(sqlDT);
-					ps.setInt(1, days);
-					ResultSet rs = ps.executeQuery();
-					tongDT = rs.next() ? (long) rs.getDouble(1) : 0;
-					rs.close();
-					ps.close();
-
-					// Số đơn
-					String sqlDon = "SELECT COUNT(*) FROM HoaDon WHERE trangThaiThanhToan=N'Đã thanh toán' "
-							+ "AND ngayGioThanhToan >= DATEADD(DAY,-?,CAST(GETDATE() AS DATE))";
-					ps = con.prepareStatement(sqlDon);
-					ps.setInt(1, days);
-					rs = ps.executeQuery();
-					soDon = rs.next() ? rs.getInt(1) : 0;
-					rs.close();
-					ps.close();
-					giaTB = soDon > 0 ? tongDT / soDon : 0;
-
-					// Khách hàng
-					String sqlKH = "SELECT COUNT(DISTINCT ISNULL(tenKhachLe,'?')) FROM HoaDon "
-							+ "WHERE trangThaiThanhToan=N'Đã thanh toán' "
-							+ "AND ngayGioThanhToan >= DATEADD(DAY,-?,CAST(GETDATE() AS DATE))";
-					ps = con.prepareStatement(sqlKH);
-					ps.setInt(1, days);
-					rs = ps.executeQuery();
-					soKH = rs.next() ? rs.getInt(1) : 0;
-					rs.close();
-					ps.close();
-
-					// Line chart: doanh thu theo ngày
-					String sqlLine = "SELECT CAST(ngayGioThanhToan AS DATE) as ngay, ISNULL(SUM(tongTien),0) as dt "
-							+ "FROM HoaDon WHERE trangThaiThanhToan=N'Đã thanh toán' "
-							+ "AND ngayGioThanhToan >= DATEADD(DAY,-?,CAST(GETDATE() AS DATE)) "
-							+ "GROUP BY CAST(ngayGioThanhToan AS DATE) ORDER BY ngay";
-					ps = con.prepareStatement(sqlLine);
-					ps.setInt(1, days);
-					rs = ps.executeQuery();
-					while (rs.next())
-						chartData.add(new long[] { rs.getDate("ngay").getTime(), (long) rs.getDouble("dt") });
-					rs.close();
-					ps.close();
-
-					// Top món bán chạy
-					String sqlTop = "SELECT TOP 10 m.tenMonAn, dm.tenDM, "
-							+ "SUM(c.soLuong) as sl, SUM(c.thanhTien) as dt "
-							+ "FROM ChiTietHoaDon c JOIN MonAn m ON c.maMonAn=m.maMonAn "
-							+ "JOIN DanhMucMonAn dm ON m.maDM=dm.maDM " + "JOIN HoaDon h ON c.maHD=h.maHD "
-							+ "WHERE h.trangThaiThanhToan=N'Đã thanh toán' "
-							+ "AND h.ngayGioThanhToan >= DATEADD(DAY,-?,CAST(GETDATE() AS DATE)) "
-							+ "GROUP BY m.tenMonAn, dm.tenDM ORDER BY sl DESC";
-					ps = con.prepareStatement(sqlTop);
-					ps.setInt(1, days);
-					rs = ps.executeQuery();
-					while (rs.next())
-						topMon.add(new String[] { rs.getString("tenMonAn"), rs.getString("tenDM"),
-								String.valueOf(rs.getInt("sl")),
-								String.format("%,.0fđ", rs.getDouble("dt")).replace(",", "."), "" });
-					rs.close();
-					ps.close();
-
-					// Phân bố danh mục (pie chart)
-					String sqlPie = "SELECT dm.tenDM, SUM(c.thanhTien) as dt "
-							+ "FROM ChiTietHoaDon c JOIN MonAn m ON c.maMonAn=m.maMonAn "
-							+ "JOIN DanhMucMonAn dm ON m.maDM=dm.maDM " + "JOIN HoaDon h ON c.maHD=h.maHD "
-							+ "WHERE h.trangThaiThanhToan=N'Đã thanh toán' "
-							+ "AND h.ngayGioThanhToan >= DATEADD(DAY,-?,CAST(GETDATE() AS DATE)) "
-							+ "GROUP BY dm.tenDM ORDER BY dt DESC";
-					ps = con.prepareStatement(sqlPie);
-					ps.setInt(1, days);
-					rs = ps.executeQuery();
-					while (rs.next())
-						phanBo.add(new String[] { rs.getString("tenDM"), String.valueOf((long) rs.getDouble("dt")) });
-					rs.close();
-					ps.close();
-
-					// Tính % cho topMon
-					if (!topMon.isEmpty() && tongDT > 0) {
-						for (String[] row : topMon) {
-							long dt = Long.parseLong(row[3].replaceAll("[^0-9]", ""));
-							row[4] = String.format("%.1f%%", (double) dt / tongDT * 100);
-						}
-					}
-
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				return null;
-			}
-
-			@Override
-			protected void done() {
-				// Stat cards
-				lbTongDT.setText(tongDT == 0 ? "0đ" : String.format("%,.0fđ", (double) tongDT).replace(",", "."));
-				lbSoDon.setText(String.valueOf(soDon));
-				lbGiaTBDon.setText(giaTB == 0 ? "0đ" : String.format("%,.0fđ", (double) giaTB).replace(",", "."));
-				lbKhachHang.setText(String.valueOf(soKH));
-
-				// Charts
-				lineChart.setData(chartData);
-				pieChart.setData(phanBo);
-
-				// Table
-				tblModel.setRowCount(0);
-				for (String[] r : topMon)
-					tblModel.addRow(r);
-				currentTongDT = tongDT;
-				currentSoDon = soDon;
-				currentSoKH = soKH;
-				currentGiaTB = giaTB;
-
-				currentChartData = new ArrayList<>(chartData);
-				currentTopMon = new ArrayList<>(topMon);
-				currentPhanBo = new ArrayList<>(phanBo);
-			}
-		};
-		w.execute();
-	}
-
-	// LINE CHART (tự vẽ)
+	// ====================================================================
+	// CÁC LỚP VẼ BIỂU ĐỒ (Giữ nguyên)
+	// ====================================================================
 	static class LineChartPanel extends JPanel {
 		private List<long[]> data = new ArrayList<>();
 		private static final Color LINE_COLOR = new Color(220, 38, 38);
@@ -652,14 +845,12 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 			if (maxDT == 0)
 				maxDT = 1;
 
-			// Grid lines
 			g2.setColor(new Color(240, 240, 240));
 			for (int i = 0; i <= 4; i++) {
 				int y = pad + chartH * i / 4;
 				g2.drawLine(pad, y, pad + chartW, y);
 			}
 
-			// Line
 			g2.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 			g2.setColor(LINE_COLOR);
 			int n = data.size();
@@ -671,7 +862,6 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 			for (int i = 0; i < n - 1; i++)
 				g2.drawLine(xs[i], ys[i], xs[i + 1], ys[i + 1]);
 
-			// Dots + labels x
 			SimpleDateFormat sdf = new SimpleDateFormat("dd/MM");
 			g2.setFont(new Font("Segoe UI", Font.PLAIN, 10));
 			for (int i = 0; i < n; i++) {
@@ -683,7 +873,6 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 				g2.drawString(lbl, xs[i] - fm.stringWidth(lbl) / 2, pad + chartH + 14);
 			}
 
-			// Y label
 			g2.setColor(new Color(120, 120, 120));
 			String maxStr = String.format("%.0fTr đ", (double) maxDT / 1_000_000);
 			g2.drawString(maxStr, 2, pad + 8);
@@ -692,7 +881,6 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 		}
 	}
 
-	// PIE CHART (tự vẽ)
 	static class PieChartPanel extends JPanel {
 		private List<String[]> data = new ArrayList<>();
 		private static final Color[] COLORS = { new Color(220, 38, 38), new Color(251, 146, 60), new Color(234, 179, 8),
@@ -740,7 +928,6 @@ public class FrmBaoCaoDoanhThu extends JPanel {
 				angle += sweep;
 			}
 
-			// Legend
 			g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 			int lx = getWidth() / 2 + 10, ly = cy - data.size() * 18 / 2;
 			for (int i = 0; i < data.size() && i < COLORS.length; i++) {
