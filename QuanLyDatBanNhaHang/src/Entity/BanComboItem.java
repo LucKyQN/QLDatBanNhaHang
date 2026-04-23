@@ -14,6 +14,6 @@ public class BanComboItem {
 
     @Override
     public String toString() {
-        return tenBan; // JComboBox trên GUI sẽ hiển thị tên bàn này
+        return tenBan; 
     }
 }

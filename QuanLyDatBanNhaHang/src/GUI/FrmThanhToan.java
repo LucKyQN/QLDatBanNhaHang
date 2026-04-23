@@ -18,9 +18,9 @@ public class FrmThanhToan extends JDialog {
 	private static final Color BORDER_CLR = new Color(230, 230, 230);
 	private static final Color TEXT_DARK = new Color(40, 40, 40);
 
-	private String maBan; // Đã thêm biến mã bàn
+	private String maBan; 
 	private String tenBan;
-	private String maHDHienTai = null; // Lưu mã hóa đơn đang cần thanh toán
+	private String maHDHienTai = null; 
 	private double tongTienBill = 0;
 
 	private final HoaDonDAO hoaDonDAO = new HoaDonDAO();
@@ -30,7 +30,6 @@ public class FrmThanhToan extends JDialog {
 	private JTextField txtKhachDua;
 	private DefaultTableModel model;
 
-	// HÀM KHỞI TẠO ĐÃ ĐƯỢC SỬA ĐỂ NHẬN 3 THAM SỐ (Hết báo lỗi đỏ bên FrmLeTan)
 	public FrmThanhToan(JFrame parent, String maBan, String tenBan) {
 		super(parent, true);
 		this.maBan = maBan;
@@ -152,7 +151,7 @@ public class FrmThanhToan extends JDialog {
 		pnlPay.add(rowTienKhachTra);
 		pnlPay.add(Box.createVerticalStrut(25));
 
-		// Ô nhập tiền khách đưa
+		
 		JPanel pnlKhachDua = new JPanel(new BorderLayout());
 		pnlKhachDua.setBackground(Color.WHITE);
 		pnlKhachDua.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));

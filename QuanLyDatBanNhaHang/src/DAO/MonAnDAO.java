@@ -156,7 +156,6 @@ public class MonAnDAO {
 			return false;
 		}
 	}
-	// HÀM MỚI: XÓA HOÀN TOÀN KHỎI DATABASE
 
 	public boolean tonTaiMaMonAn(String maMonAn) {
 		String sql = "SELECT COUNT(*) FROM MonAn WHERE maMonAn = ?";
@@ -206,18 +205,15 @@ public class MonAnDAO {
 	}
 
 	public String getMaMonTuDong() {
-		String maMoi = "MA001"; // Mặc định nếu bảng trống
-		// Lấy mã có số thứ tự lớn nhất
+		String maMoi = "MA001"; 
 		String sql = "SELECT TOP 1 maMonAn FROM MonAn ORDER BY maMonAn DESC";
 		try {
 			Connection con = getConnection();
 			PreparedStatement stmt = con.prepareStatement(sql);
 			ResultSet rs = stmt.executeQuery();
 			if (rs.next()) {
-				String maCu = rs.getString("maMonAn"); // Ví dụ: "MA010"
-				// Tách phần số ra (bỏ 2 chữ cái đầu "MA")
+				String maCu = rs.getString("maMonAn"); 
 				int so = Integer.parseInt(maCu.substring(2)) + 1;
-				// Format lại thành MA + 3 chữ số (ví dụ: MA011)
 				maMoi = String.format("MA%03d", so);
 			}
 		} catch (Exception e) {

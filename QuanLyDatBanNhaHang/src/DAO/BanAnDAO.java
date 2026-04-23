@@ -122,7 +122,6 @@ public class BanAnDAO {
 	public boolean capNhatTrangThai(String maBan, String trangThaiMoi) {
 		String sql = "UPDATE BanAn SET trangThai = ? WHERE maBan = ?";
 		try {
-			// Sử dụng kết nối từ ConnectDB của bạn
 			Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
 			PreparedStatement stmt = con.prepareStatement(sql);
 			stmt.setString(1, trangThaiMoi);
@@ -135,7 +134,6 @@ public class BanAnDAO {
 		}
 	}
 
-	// HÀM MỚI: CHUYỂN BÀN & GỘP BÀN (DÙNG TRANSACTION)
 	public boolean chuyenHoacGopBan(String banCu, String banMoi) {
 		Connection con = null;
 		try {
@@ -143,26 +141,22 @@ public class BanAnDAO {
 			
 			con.setAutoCommit(false);
 
-			// 1. Đặt bàn cũ (Bàn chuyển đi / Bàn bị gộp) thành "Trống"
 			String sql1 = "UPDATE BanAn SET trangThai = N'Trống' WHERE tenBan = ?";
 			PreparedStatement ps1 = con.prepareStatement(sql1);
 			ps1.setString(1, banCu);
 			ps1.executeUpdate();
 			ps1.close();
 
-			// 2. Đặt bàn mới (Bàn chuyển đến / Bàn nhận gộp) thành "Có khách"
 			String sql2 = "UPDATE BanAn SET trangThai = N'Có khách' WHERE tenBan = ?";
 			PreparedStatement ps2 = con.prepareStatement(sql2);
 			ps2.setString(1, banMoi);
 			ps2.executeUpdate();
 			ps2.close();
 
-			// Xác nhận lưu toàn bộ thay đổi
 			con.commit();
 			return true;
 
 		} catch (Exception e) {
-			// Nếu có lỗi ở bất kỳ bước nào, hoàn tác lại (Rollback)
 			try {
 				if (con != null)
 					con.rollback();
@@ -171,7 +165,6 @@ public class BanAnDAO {
 			e.printStackTrace();
 			return false;
 		} finally {
-			// Bật lại auto commit
 			try {
 				if (con != null)
 					con.setAutoCommit(true);
@@ -230,7 +223,7 @@ public class BanAnDAO {
 			ResultSet rs = ps.executeQuery();
 
 			if (rs.next()) {
-				String maCuoi = rs.getString("maBan"); // ví dụ BAN11
+				String maCuoi = rs.getString("maBan"); 
 				if (maCuoi != null && maCuoi.matches("BAN\\d+")) {
 					int so = Integer.parseInt(maCuoi.substring(3));
 					rs.close();

@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import connectDatabase.ConnectDB;
 import javax.swing.JOptionPane;
 
-/** Kết nối SQL Server qua HoaDonDAO / MonAnDAO. */
 public class PhucVuServiceDb implements PhucVuService {
 
 	private final HoaDonDAO hoaDonDAO = new HoaDonDAO();
@@ -257,7 +256,7 @@ public class PhucVuServiceDb implements PhucVuService {
 	public List<BanAnModel> getDanhSachBanCanPhucVu() {
 		List<BanAnModel> list = new ArrayList<>();
 
-		// UNION gom tất cả bàn chính và bàn phụ đang phục vụ
+		
 		String sql = "SELECT hd.maHD, b.maBan, b.tenBan, hd.trangThaiThanhToan AS trangThaiHD, "
 				+ "ISNULL((SELECT SUM(soLuong * donGia) FROM ChiTietHoaDon WHERE maHD = hd.maHD), 0) AS tamTinh "
 				+ "FROM HoaDon hd JOIN BanAn b ON hd.maBan = b.maBan "
@@ -274,7 +273,7 @@ public class PhucVuServiceDb implements PhucVuService {
 			java.sql.PreparedStatement ps = con.prepareStatement(sql);
 			java.sql.ResultSet rs = ps.executeQuery();
 
-			// Gom nhóm các bàn chung 1 mã Hóa Đơn bằng Java
+			
 			java.util.Map<String, BanAnModel> map = new java.util.LinkedHashMap<>();
 
 			while (rs.next()) {
@@ -284,7 +283,7 @@ public class PhucVuServiceDb implements PhucVuService {
 
 				if (map.containsKey(maHD)) {
 					BanAnModel ban = map.get(maHD);
-					// Ghép thêm tên bàn vào (Ví dụ: Bàn B1, Bàn B2)
+					
 					if (!ban.tenBan.contains(tenBan)) {
 						ban.tenBan += ", " + tenBan;
 					}

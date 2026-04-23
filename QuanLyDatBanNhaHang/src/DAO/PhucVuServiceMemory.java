@@ -192,7 +192,6 @@ public class PhucVuServiceMemory implements PhucVuService {
 		}).collect(Collectors.toList());
 	}
 
-	// Thêm vào file PhucVuServiceMemory.java để hết lỗi biên dịch
 	@Override
 	public boolean capNhatTrangThaiMon(int idCTHD, String trangThaiMoi) {
 		System.out.println("Memory: Cập nhật dòng ID " + idCTHD + " sang " + trangThaiMoi);
@@ -201,7 +200,7 @@ public class PhucVuServiceMemory implements PhucVuService {
 
 	@Override
 	public boolean yeuCauThanhToan(String maHD, String maBan) {
-		// Bản chạy trên RAM chỉ cần in ra log
+		
 		System.out.println("Memory: Đã gửi yêu cầu thanh toán cho bàn " + maBan);
 		return true;
 	}

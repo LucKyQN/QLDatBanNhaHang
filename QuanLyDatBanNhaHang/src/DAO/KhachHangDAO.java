@@ -16,10 +16,9 @@ public class KhachHangDAO {
         return ConnectDB.getInstance().getConnection();
     }
 
-    // --- Đã thêm tham số Connection con vào ---
+
     private String phatSinhMaKH(Connection con) {
         String sql = "SELECT TOP 1 maKH FROM KhachHang ORDER BY maKH DESC";
-        // Bỏ dòng lấy Connection mới, dùng luôn con được truyền vào
         try (PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -36,7 +35,7 @@ public class KhachHangDAO {
         return "KH001";
     }
 
-    // --- Đã thêm tham số Connection con vào ---
+
     public void luuHoacCapNhatKhachHang(Connection con, String sdt, String tenKH, long tienThanhToan) {
         if (sdt == null || sdt.trim().isEmpty() || sdt.equalsIgnoreCase("Trống")) {
             return;
@@ -45,7 +44,6 @@ public class KhachHangDAO {
         int diemCongThem = (int) (tienThanhToan / 100000);
         String sqlCheck = "SELECT maKH FROM KhachHang WHERE soDienThoai = ?";
 
-        // Bỏ dòng lấy Connection mới, chỉ dùng PreparedStatement
         try (PreparedStatement psCheck = con.prepareStatement(sqlCheck)) {
 
             psCheck.setString(1, sdt);
@@ -76,7 +74,6 @@ public class KhachHangDAO {
         }
     }
 
-    // Lấy toàn bộ danh sách khách hàng
     public List<KhachHang> getAllKhachHang() {
         List<KhachHang> ds = new ArrayList<>();
         String sql = "SELECT * FROM KhachHang ORDER BY ngayThamGia ASC";
@@ -101,7 +98,7 @@ public class KhachHangDAO {
         return ds;
     }
 
-    // Tìm kiếm khách hàng theo Tên hoặc SĐT
+
     public List<KhachHang> timKiemKhachHang(String keyword) {
         List<KhachHang> ds = new ArrayList<>();
         String sql = "SELECT * FROM KhachHang WHERE tenKH LIKE ? OR soDienThoai LIKE ?";
@@ -122,5 +119,38 @@ public class KhachHangDAO {
             e.printStackTrace();
         }
         return ds;
+    }
+    public KhachHang timKhachHangTheoSDT(String sdt) {
+        String sql = "SELECT * FROM KhachHang WHERE soDienThoai = ? AND trangThai = 1";
+        try {
+            Connection con = getConnection();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, sdt);
+            ResultSet rs = ps.executeQuery();
+
+            KhachHang kh = null;
+            if (rs.next()) {
+                kh = new KhachHang(
+                        rs.getString("maKH"),
+                        rs.getDate("ngayThamGia"),
+                        rs.getString("soDienThoai"),
+                        rs.getString("tenKH"),
+                        rs.getInt("diemTichLuy"),
+                        rs.getBoolean("trangThai")
+                );
+            }
+
+            rs.close();
+            ps.close();
+            return kh;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public String timTenKhachTheoSDT(String sdt) {
+        KhachHang kh = timKhachHangTheoSDT(sdt);
+        return kh != null ? kh.getTen() : null;
     }
 }

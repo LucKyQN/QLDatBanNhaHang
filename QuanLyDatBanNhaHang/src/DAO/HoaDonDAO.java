@@ -97,7 +97,7 @@ public class HoaDonDAO {
         return String.join(", ", set);
     }
 
-    // Chi tiết món ăn theo maHD
+    
     public List<MonAnModel> getChiTietHoaDon(String maHD) {
         List<MonAnModel> ds = new ArrayList<>();
 
@@ -694,9 +694,8 @@ public class HoaDonDAO {
         Connection con = null;
         try {
             con = getConnection();
-            con.setAutoCommit(false); // Bật Transaction an toàn
+            con.setAutoCommit(false); 
 
-            // Bước Đổi trạng thái món thành Hủy
             String sql = "UPDATE ChiTietHoaDon SET trangThaiPhucVu = ? WHERE ID_CTHD = ?";
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, trangThaiMoi);
@@ -704,7 +703,6 @@ public class HoaDonDAO {
             boolean ok = ps.executeUpdate() > 0;
             ps.close();
 
-            // Bước Cập nhật lại tổng tiền của Hóa Đơn đó (loại bỏ món Hủy)
             if (ok) {
                 String sqlTong = "UPDATE HoaDon SET tongTien = ("
                         + "SELECT ISNULL(SUM(thanhTien), 0) FROM ChiTietHoaDon "
@@ -738,8 +736,7 @@ public class HoaDonDAO {
     }
 
     public String[] getThongTinKhachVuaMo(String maBan) {
-        // Dùng UNION để tìm hóa đơn: Lấy bàn chính (HoaDon) + Lấy bàn phụ
-        // (ChiTietDatBan)
+        
         String sql = "SELECT TOP 1 * FROM (" +
                 "  SELECT tenKhachLe, sdtKhachLe, soLuongKhach, ngayGioLap AS thoiGianTao " +
                 "  FROM HoaDon WHERE maBan = ? AND trangThaiThanhToan = N'Chưa thanh toán' " +
@@ -752,7 +749,7 @@ public class HoaDonDAO {
             java.sql.Connection con = connectDatabase.ConnectDB.getInstance().getConnection();
             java.sql.PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, maBan);
-            ps.setString(2, maBan); // Truyền maBan cho cả 2 vế UNION
+            ps.setString(2, maBan); 
             java.sql.ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm:ss");
@@ -773,13 +770,11 @@ public class HoaDonDAO {
         List<MonAnModel> ds = new ArrayList<>();
         String sql = "";
 
-        // Bàn đang có khách -> lấy từ ChiTietHoaDon
         if (trangThaiBan.equalsIgnoreCase("Có khách")) {
             sql = "SELECT m.tenMonAn, c.soLuong, c.donGia, c.thanhTien, c.trangThaiPhucVu " + "FROM ChiTietHoaDon c "
                     + "JOIN MonAn m ON c.maMonAn = m.maMonAn " + "JOIN HoaDon h ON c.maHD = h.maHD "
                     + "WHERE h.maBan = ? AND h.trangThaiThanhToan = N'Chưa thanh toán'";
         }
-        // Bàn đã đặt -> lấy từ ChiTietDonDatMon
         else if (trangThaiBan.equalsIgnoreCase("Đã đặt")) {
             sql = "SELECT m.tenMonAn, ct.soLuong, m.giaBan, (ct.soLuong * m.giaBan) AS thanhTien "
                     + "FROM ChiTietDonDatMon ct " + "JOIN MonAn m ON ct.maMonAn = m.maMonAn "
@@ -853,7 +848,6 @@ public class HoaDonDAO {
             int rows = psInsert.executeUpdate();
             psInsert.close();
 
-            // 2) Cập nhật tổng tiền hóa đơn
             String sqlTong = "UPDATE HoaDon " +
                     "SET tongTien = (SELECT ISNULL(SUM(thanhTien), 0) FROM ChiTietHoaDon WHERE maHD = ?) " +
                     "WHERE maHD = ?";
@@ -863,7 +857,6 @@ public class HoaDonDAO {
             psTong.executeUpdate();
             psTong.close();
 
-            // 3) Đánh dấu tất cả đơn đặt món của các bàn trong phiếu là đã vào bàn
             String sqlUpdateDon = "UPDATE DonDatMon " +
                     "SET trangThai = N'Đã vào bàn' " +
                     "WHERE maBan IN (SELECT maBan FROM ChiTietDatBan WHERE maPhieu = ?) " +
@@ -876,7 +869,7 @@ public class HoaDonDAO {
             con.commit();
 
             System.out.println(">>> So dong mon copy sang hoa don: " + rows);
-            return true; // vẫn true kể cả rows = 0 nếu khách không đặt món trước
+            return true; 
         } catch (Exception e) {
             try {
                 if (con != null)
@@ -920,11 +913,9 @@ public class HoaDonDAO {
         }
     }
 
-    // PHỤC VỤ YÊU CẦU: CHUYỂN BÀN & GỘP BÀN
 
     // 1. Chuyển bàn
     public boolean chuyenBan(String maBanCu, String maBanMoi) {
-        // Chỉ đổi mã bàn đối với Hóa Đơn đang 'Chưa thanh toán'
         String sql = "UPDATE HoaDon SET maBan = ? WHERE maBan = ? AND trangThaiThanhToan = N'Chưa thanh toán'";
         try {
             Connection con = getConnection();
@@ -943,7 +934,6 @@ public class HoaDonDAO {
 
     // 2. Gộp bàn
     public boolean gopBan(String maBanBiGop, String maBanChinh) {
-        // Lấy mã hóa đơn đang active của 2 bàn
         String maHDChinh = getMaHoaDonChuaThanhToanCuaBan(maBanChinh);
         String maHDBiGop = getMaHoaDonChuaThanhToanCuaBan(maBanBiGop);
 
@@ -953,10 +943,9 @@ public class HoaDonDAO {
         Connection con = null;
         try {
             con = getConnection();
-            con.setAutoCommit(false); // Bật Transaction
+            con.setAutoCommit(false); 
 
-            // BƯỚC Nếu 2 bàn có gọi CÙNG 1 MÓN -> Cộng dồn số lượng và thành tiền vào HD
-            // Chính
+            
             String sqlUpdateTrung = "UPDATE cChinh " + "SET cChinh.soLuong = cChinh.soLuong + cGop.soLuong, "
                     + "    cChinh.thanhTien = cChinh.thanhTien + cGop.thanhTien " + "FROM ChiTietHoaDon cChinh "
                     + "INNER JOIN ChiTietHoaDon cGop ON cChinh.maMonAn = cGop.maMonAn "
@@ -967,7 +956,6 @@ public class HoaDonDAO {
             ps1.executeUpdate();
             ps1.close();
 
-            // BƯỚC Xóa những món trùng vừa được cộng dồn ở HD Bị Gộp
             String sqlDeleteTrung = "DELETE FROM ChiTietHoaDon WHERE maHD = ? AND maMonAn IN "
                     + "(SELECT maMonAn FROM ChiTietHoaDon WHERE maHD = ?)";
             PreparedStatement ps2 = con.prepareStatement(sqlDeleteTrung);
@@ -976,7 +964,6 @@ public class HoaDonDAO {
             ps2.executeUpdate();
             ps2.close();
 
-            // BƯỚC Những món CÒN LẠI (không trùng) -> Đổi ID Hóa đơn sang HD Chính
             String sqlMove = "UPDATE ChiTietHoaDon SET maHD = ? WHERE maHD = ?";
             PreparedStatement ps3 = con.prepareStatement(sqlMove);
             ps3.setString(1, maHDChinh);
@@ -984,7 +971,6 @@ public class HoaDonDAO {
             ps3.executeUpdate();
             ps3.close();
 
-            // BƯỚC Cập nhật lại TỔNG TIỀN và SỐ LƯỢNG KHÁCH cho HD Chính
             String sqlUpdateHDChinh = "UPDATE HoaDon SET "
                     + "tongTien = (SELECT ISNULL(SUM(thanhTien), 0) FROM ChiTietHoaDon WHERE maHD = ?), "
                     + "soLuongKhach = soLuongKhach + (SELECT soLuongKhach FROM HoaDon WHERE maHD = ?) "
@@ -996,19 +982,16 @@ public class HoaDonDAO {
             ps4.executeUpdate();
             ps4.close();
 
-            // BƯỚC Xóa rác (Khuyến mãi nếu có) của HD bị gộp để tránh dính khóa ngoại
             PreparedStatement ps5 = con.prepareStatement("DELETE FROM HoaDonKhuyenMai WHERE maHD = ?");
             ps5.setString(1, maHDBiGop);
             ps5.executeUpdate();
             ps5.close();
 
-            // BƯỚC Xóa Hóa đơn rỗng của bàn bị gộp
             PreparedStatement ps6 = con.prepareStatement("DELETE FROM HoaDon WHERE maHD = ?");
             ps6.setString(1, maHDBiGop);
             ps6.executeUpdate();
             ps6.close();
 
-            // Hoàn tất Transaction
             con.commit();
             return true;
 

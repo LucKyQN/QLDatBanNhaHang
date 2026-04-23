@@ -94,11 +94,11 @@ public class FrmLeTan extends JFrame {
 		root.add(createRightSidebar(), BorderLayout.EAST);
 		setContentPane(root);
 
-		// Load danh sách ngay khi mở form
+
 		loadDanhSachDatCho();
 	}
 
-	// TOP BAR & TABS
+
 
 	private JPanel createTopBar() {
 		JPanel bar = new JPanel(new BorderLayout());
@@ -240,7 +240,7 @@ public class FrmLeTan extends JFrame {
 		// Bộ lọc bên phải
 		JPanel pnlFilter = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
 		pnlFilter.setOpaque(false);
-		JLabel lblFilter = new JLabel("Tìm bàn trống:");
+		JLabel lblFilter = new JLabel("Lọc bàn:");
 		lblFilter.setFont(new Font("Segoe UI", Font.BOLD, 14));
 		lblFilter.setForeground(TEXT_DARK);
 
@@ -429,7 +429,7 @@ public class FrmLeTan extends JFrame {
 				}
 			}
 		} else {
-			JOptionPane.showMessageDialog(this, "Hệ thống đang tải dữ liệu hoặc bàn này không có phiếu hợp lệ!");
+			JOptionPane.showMessageDialog(this, "Hệ thống đang tải dữ liệu hoặc bàn này không có phiếu hợp lệ");
 		}
 	}
 	// Cập nhật hàm xuLyMoBan nhận thêm tham số tenBan và capacity
